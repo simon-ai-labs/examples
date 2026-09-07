@@ -1,0 +1,12 @@
+# Build results
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+
+# Visual Studio
+.vs/
+*.user
+
+# Local secrets — never commit real API keys
+.env
