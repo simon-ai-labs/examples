@@ -82,9 +82,10 @@ public static class ConfigurationHelper
         [
             Path.Combine(AppContext.BaseDirectory, ".env"),
             Path.Combine(Directory.GetCurrentDirectory(), ".env"),
-            Path.Combine(Directory.GetCurrentDirectory(), "Samples", ".env"),
+            Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"),
+            Path.Combine(Directory.GetCurrentDirectory(), "invoice-api-calls", ".env"),
             Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".env"),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Samples", ".env")
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".env")
         ];
 
         foreach (var path in searchPaths)
