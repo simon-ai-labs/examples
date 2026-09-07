@@ -16,7 +16,7 @@ public static class Program
     {
         Console.WriteLine("==================================================================");
         Console.WriteLine("    RapidAPI E-Invoicing Service — Step-by-Step Walkthrough      ");
-        Console.WriteLine("    https://rapidapi.com/alexandersimon90/api/e-invoicing-service");
+        Console.WriteLine("    https://rapidapi.com/schickmaster/api/european-german-e-invoicing-service");
         Console.WriteLine("==================================================================\n");
 
         // 1. Resolve configuration (CLI args -> .env -> User Secrets -> Environment Variables)

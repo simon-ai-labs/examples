@@ -4,8 +4,8 @@ namespace InvoiceServices.Samples.Configuration;
 
 public static class ConfigurationHelper
 {
-    private const string DefaultRapidApiHost = "e-invoicing-service.p.rapidapi.com";
-    private const string DefaultRapidApiBaseUrl = "https://e-invoicing-service.p.rapidapi.com";
+    private const string DefaultRapidApiHost = "european-german-e-invoicing-service.p.rapidapi.com";
+    private const string DefaultRapidApiBaseUrl = "https://european-german-e-invoicing-service.p.rapidapi.com";
 
     public static (string BaseUrl, string Host, string? ApiKey, bool IsLocal) ResolveConnectionSettings(string[] args)
     {

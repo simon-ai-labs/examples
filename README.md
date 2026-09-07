@@ -1,79 +1,42 @@
-# RapidAPI E-Invoicing Sample Walkthrough (.NET)
+# E-Invoicing Service Examples
 
-This sample console application demonstrates step-by-step how to interact with the **E-Invoicing Service** on RapidAPI:
-[E-Invoicing Service on RapidAPI](https://rapidapi.com/alexandersimon90/api/e-invoicing-service)
+Sample code demonstrating how to interact with the [E-Invoicing Service on RapidAPI](https://rapidapi.com/schickmaster/api/european-german-e-invoicing-service).
 
-It covers all five core functions documented in `RAPIDAPI.md`:
-1. **Capabilities**: Querying supported formats, profiles, and operations (`GET /v1/capabilities`).
-2. **Generation**: Generating a compliant electronic invoice (XRechnung, Peppol BIS 3.0, ZUGFeRD) from pure JSON (`POST /v1/invoices/generate`).
-3. **Validation**: Validating an electronic invoice against official Schematron, XSD, and business rules (`POST /v1/invoices/validate`).
-4. **Reading**: Parsing raw XML or hybrid PDF into a canonical structured invoice object (`POST /v1/invoices/read`).
-5. **Conversion**: Converting between invoice syntaxes and formats (e.g., UBL to CII, XRechnung to Factur-X) (`POST /v1/invoices/convert`).
-6. **Rendering**: Generating human-readable HTML and print-ready PDF visualizations (`POST /v1/invoices/render`).
+> ⚠️ **Disclaimer: Demonstration Purposes Only**  
+> This code is provided **for demo and educational purposes only**. It is **not intended for production use**. Before using any code in production environments, ensure proper error handling, secret management, logging, resiliency, and compliance with your organization's security standards.
 
 ---
 
-## Prerequisites
+## Projects
 
+- **[invoice-api-calls](invoice-api-calls/)**: Console walkthrough covering all core operations of the E-Invoicing API:
+  - Checking capabilities (`GET /v1/capabilities`)
+  - Invoice generation (`POST /v1/invoices/generate`)
+  - Invoice validation (`POST /v1/invoices/validate`)
+  - Reading structured data (`POST /v1/invoices/read`)
+  - Syntax conversion (`POST /v1/invoices/convert`)
+  - Rendering HTML / PDF (`POST /v1/invoices/render`)
+
+---
+
+## Quick Start
+
+### Prerequisites
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
-- An active RapidAPI Account and API key from [RapidAPI E-Invoicing Service](https://rapidapi.com/alexandersimon90/api/e-invoicing-service)
+- RapidAPI Key for [E-Invoicing Service](https://rapidapi.com/schickmaster/api/european-german-e-invoicing-service)
 
----
-
-## Configuration
-
-Set your RapidAPI key as an environment variable, or pass it as an argument:
-
+### Build Solution
 ```bash
-# Set environment variable (recommended)
-export RAPIDAPI_KEY="your-rapidapi-key-here"
-
-# On Windows PowerShell:
-$env:RAPIDAPI_KEY="your-rapidapi-key-here"
+dotnet build examples.sln
 ```
 
----
-
-## Running the Sample
-
+### Run Walkthrough
 ```bash
-# Run using environment variable
-dotnet run --project invoice-api-calls/invoice-api-calls.csproj
-
-# Or run passing your RapidAPI key directly
+# Pass key as argument:
 dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- <YOUR_RAPIDAPI_KEY>
+
+# Or set environment variable:
+export RAPIDAPI_KEY="your-rapidapi-key"   # Linux / macOS
+$env:RAPIDAPI_KEY="your-rapidapi-key"     # Windows PowerShell
+dotnet run --project invoice-api-calls/invoice-api-calls.csproj
 ```
-
-You can also test against a local instance of the API:
-```bash
-dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- http://localhost:5000 local-mode
-```
-
----
-
-## What the Sample Does
-
-1. **Step 1: Check Capabilities**
-   Calls `GET /v1/capabilities` and displays supported standards (XRechnung, Peppol, ZUGFeRD) and their available operations.
-
-2. **Step 2: Generate an Invoice**
-   Creates a canonical invoice model in memory and requests `POST /v1/invoices/generate` for:
-   - Target: `XRechnung 3.0.2` (UBL syntax).
-   XRechnung is the format whose capabilities cover validate, read, convert and render, so it is used
-   as the primary document for the end-to-end steps below. Saves the resulting XML locally.
-
-3. **Step 3: Validate the Invoice**
-   Base64-encodes the generated XML and calls `POST /v1/invoices/validate`.
-   Prints the validation status (`valid: true/false`) and any diagnostic issues/rules.
-
-4. **Step 4: Read the Invoice**
-   Calls `POST /v1/invoices/read` to extract the invoice ID, seller, buyer, line items, and totals into structured JSON.
-
-5. **Step 5: Convert the Invoice**
-   Calls `POST /v1/invoices/convert` to transform the XRechnung UBL invoice into `XRechnung 3.0.2` in `CII` syntax.
-   Saves the converted document to `converted_xrechnung_cii.xml`.
-
-6. **Step 6: Render Human-Readable Visualizations**
-   Calls `POST /v1/invoices/render`:
-   - `outputFormat: "html"` -> saved as `rendered_invoice.html`
-   - `outputFormat: "pdf"` -> saved as `rendered_invoice.pdf`
