@@ -1,4 +1,6 @@
+using System.Text;
 using System.Text.Json.Nodes;
+using System.Xml.Linq;
 
 namespace InvoiceServices.Samples.Services;
 
@@ -16,10 +18,16 @@ public sealed class EInvoicingWalkthroughService(EInvoicingApiClient api)
 
         var (base64Content, fileName) = await Step2_LoadOfficialTestInvoiceAsync();
         await Step3_ValidateInvoiceAsync(base64Content, fileName);
-        await Step4_ReadInvoiceAsync(base64Content, fileName);
+        var schematronTestPassed = await Step4_ValidateExpectedSchematronFailureAsync(base64Content);
+        if (!schematronTestPassed)
+        {
+            return 1;
+        }
 
-        var convertedBase64 = await Step5_ConvertInvoiceAsync(base64Content, fileName);
-        await Step6_RenderVisualizationsAsync(convertedBase64, "converted_xrechnung_cii.xml");
+        await Step5_ReadInvoiceAsync(base64Content, fileName);
+
+        var convertedBase64 = await Step6_ConvertInvoiceAsync(base64Content, fileName);
+        await Step7_RenderVisualizationsAsync(convertedBase64, "converted_xrechnung_cii.xml");
 
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine("==================================================================");
@@ -107,10 +115,62 @@ public sealed class EInvoicingWalkthroughService(EInvoicingApiClient api)
         return isValid;
     }
 
-    public async Task<bool> Step4_ReadInvoiceAsync(string base64Content, string fileName)
+    public async Task<bool> Step4_ValidateExpectedSchematronFailureAsync(string validInvoiceBase64)
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("▶ Step 4: Reading the official test invoice (POST /v1/invoices/read)...");
+        Console.WriteLine("▶ Step 4: Checking the expected Schematron failure BR-DE-15 (BT-10)...");
+        Console.ResetColor();
+
+        // BR-DE-15 requires BuyerReference (BT-10). Removing it leaves the UBL document
+        // schema-valid, so the validation error is specifically produced by Schematron.
+        var document = XDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(validInvoiceBase64)));
+        var cbc = (XNamespace)"urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2";
+        var buyerReference = document.Root?.Element(cbc + "BuyerReference")
+            ?? throw new InvalidOperationException("The reference test invoice has no BuyerReference to remove.");
+        buyerReference.Remove();
+
+        var invalidBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(document.Declaration is null
+            ? document.ToString()
+            : document.Declaration + Environment.NewLine + document));
+        var expectedRepresentation = new JsonObject
+        {
+            ["format"] = "xRechnung",
+            ["version"] = "3.0.2",
+            ["profile"] = "xRechnung",
+            ["syntax"] = "ubl"
+        };
+
+        var validationResult = await api.ValidateInvoiceAsync(
+            invalidBase64,
+            "01.06_missing_buyer_reference_ubl.xml",
+            expectedRepresentation);
+        var failedRuleIds = validationResult?["issues"]?.AsArray()
+            .Select(issue => issue?["ruleId"]?.GetValue<string>())
+            .Where(ruleId => !string.IsNullOrWhiteSpace(ruleId))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+
+        var isExpectedFailure = !(validationResult?["valid"]?.GetValue<bool>() ?? false)
+            && failedRuleIds.Contains("BR-DE-15");
+        if (isExpectedFailure)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("✔ Expected Schematron failure confirmed: BR-DE-15 requires BuyerReference (BT-10).");
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"✘ Expected BR-DE-15, received: {string.Join(", ", failedRuleIds)}");
+        }
+
+        Console.ResetColor();
+        Console.WriteLine("✔ Step 4 completed successfully.\n");
+        return isExpectedFailure;
+    }
+
+    public async Task<bool> Step5_ReadInvoiceAsync(string base64Content, string fileName)
+    {
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("▶ Step 5: Reading the official test invoice (POST /v1/invoices/read)...");
         Console.ResetColor();
 
         var readResult = await api.ReadInvoiceAsync(base64Content, fileName);
@@ -122,14 +182,14 @@ public sealed class EInvoicingWalkthroughService(EInvoicingApiClient api)
         Console.WriteLine($"  Seller:       {invoice?["seller"]?["name"]}");
         Console.WriteLine($"  Buyer:        {invoice?["buyer"]?["name"]}");
         Console.WriteLine($"  Total Amount: {invoice?["totals"]?["payableAmount"]} {invoice?["invoiceCurrency"]}");
-        Console.WriteLine("✔ Step 4 completed successfully.\n");
+        Console.WriteLine("✔ Step 5 completed successfully.\n");
         return true;
     }
 
-    public async Task<string> Step5_ConvertInvoiceAsync(string base64Content, string fileName)
+    public async Task<string> Step6_ConvertInvoiceAsync(string base64Content, string fileName)
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("▶ Step 5: Converting the official XRechnung UBL test invoice to CII (POST /v1/invoices/convert)...");
+        Console.WriteLine("▶ Step 6: Converting the official XRechnung UBL test invoice to CII (POST /v1/invoices/convert)...");
         Console.ResetColor();
 
         var target = new JsonObject
@@ -143,14 +203,14 @@ public sealed class EInvoicingWalkthroughService(EInvoicingApiClient api)
         var (convertedBase64, _) = await api.ConvertInvoiceAsync(base64Content, fileName, target);
         await File.WriteAllBytesAsync("converted_xrechnung_cii.xml", Convert.FromBase64String(convertedBase64));
         Console.WriteLine("✔ Converted document saved locally as: converted_xrechnung_cii.xml");
-        Console.WriteLine("✔ Step 5 completed successfully.\n");
+        Console.WriteLine("✔ Step 6 completed successfully.\n");
         return convertedBase64;
     }
 
-    public async Task<bool> Step6_RenderVisualizationsAsync(string base64Content, string fileName)
+    public async Task<bool> Step7_RenderVisualizationsAsync(string base64Content, string fileName)
     {
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine("▶ Step 6: Rendering the converted test invoice as HTML and PDF (POST /v1/invoices/render)...");
+        Console.WriteLine("▶ Step 7: Rendering the converted test invoice as HTML and PDF (POST /v1/invoices/render)...");
         Console.ResetColor();
 
         try
@@ -175,7 +235,7 @@ public sealed class EInvoicingWalkthroughService(EInvoicingApiClient api)
             Console.WriteLine($"PDF render note: {ex.Message}");
         }
 
-        Console.WriteLine("✔ Step 6 completed successfully.\n");
+        Console.WriteLine("✔ Step 7 completed successfully.\n");
         return true;
     }
 }

@@ -22,6 +22,8 @@ The bundled `01.06_minimal_test_ubl.xml` is an unmodified positive reference
 invoice from the official [KoSIT XRechnung Test Suite](https://github.com/itplr-kosit/xrechnung-testsuite).
 Its pinned upstream source and license are recorded in
 [invoice-api-calls/TestInvoices/NOTICE.md](invoice-api-calls/TestInvoices/NOTICE.md).
+The walkthrough also validates an in-memory negative variant without BuyerReference
+(BT-10) and expects the XRechnung Schematron rule `BR-DE-15` to fail.
 
 ---
 
