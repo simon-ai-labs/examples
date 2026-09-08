@@ -18,23 +18,6 @@ public sealed class EInvoicingApiClient(HttpClient client, JsonSerializerOptions
         return await response.Content.ReadFromJsonAsync<JsonNode>(jsonOptions);
     }
 
-    public async Task<(string Base64Content, string FileName)> GenerateInvoiceAsync(JsonObject request)
-    {
-        using var response = await client.PostAsJsonAsync("/v1/invoices/generate", request, jsonOptions);
-        if (!response.IsSuccessStatusCode)
-        {
-            var error = await response.Content.ReadAsStringAsync();
-            throw new HttpRequestException($"GenerateInvoice failed ({response.StatusCode}): {error}");
-        }
-
-        var result = await response.Content.ReadFromJsonAsync<JsonNode>(jsonOptions);
-        var base64 = result?["document"]?["content"]?.GetValue<string>()
-            ?? throw new InvalidOperationException("Generated document content is missing in API response.");
-        var fileName = result?["document"]?["fileName"]?.GetValue<string>() ?? "invoice.xml";
-
-        return (base64, fileName);
-    }
-
     public async Task<JsonNode?> ValidateInvoiceAsync(string base64Content, string fileName, JsonObject? expectedRepresentation)
     {
         var request = new JsonObject

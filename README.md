@@ -11,11 +11,16 @@ Sample code demonstrating how to interact with the [E-Invoicing Service on Rapid
 
 - **[invoice-api-calls](invoice-api-calls/)**: Console walkthrough covering all core operations of the E-Invoicing API:
   - Checking capabilities (`GET /v1/capabilities`)
-  - Invoice generation (`POST /v1/invoices/generate`)
+  - Loading an official KoSIT/XRechnung test invoice (no invoice is generated)
   - Invoice validation (`POST /v1/invoices/validate`)
   - Reading structured data (`POST /v1/invoices/read`)
   - Syntax conversion (`POST /v1/invoices/convert`)
   - Rendering HTML / PDF (`POST /v1/invoices/render`)
+
+The bundled `01.06_minimal_test_ubl.xml` is an unmodified positive reference
+invoice from the official [KoSIT XRechnung Test Suite](https://github.com/itplr-kosit/xrechnung-testsuite).
+Its pinned upstream source and license are recorded in
+[invoice-api-calls/TestInvoices/NOTICE.md](invoice-api-calls/TestInvoices/NOTICE.md).
 
 ---
 
