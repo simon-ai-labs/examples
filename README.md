@@ -1,9 +1,10 @@
 # E-Invoicing Service Examples
 
+Generate, validate, read, convert and render XRechnung, ZUGFeRD, Peppol and EN 16931 electronic invoices using a single REST API.
+
 Sample code demonstrating how to interact with the [E-Invoicing Service on RapidAPI](https://rapidapi.com/schickmaster/api/european-german-e-invoicing-service).
 
-> ⚠️ **Disclaimer: Demonstration Purposes Only**  
-> This code is provided **for demo and educational purposes only**. It is **not intended for production use**. Before using any code in production environments, ensure proper error handling, secret management, logging, resiliency, and compliance with your organization's security standards.
+
 
 ---
 
@@ -45,3 +46,8 @@ export RAPIDAPI_KEY="your-rapidapi-key"   # Linux / macOS
 $env:RAPIDAPI_KEY="your-rapidapi-key"     # Windows PowerShell
 dotnet run --project invoice-api-calls/invoice-api-calls.csproj
 ```
+
+
+Sample code notice: These examples are intentionally minimal and intended to demonstrate API integration. Production applications should add appropriate error handling, secret management, retries, logging and monitoring.
+
+
