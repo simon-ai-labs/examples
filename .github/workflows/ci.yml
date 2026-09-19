@@ -24,3 +24,6 @@ jobs:
 
     - name: Build
       run: dotnet build examples.sln --no-restore --configuration Release
+
+    - name: Load Filing Service testapp registrations
+      run: dotnet run --project filing-service-testapps --no-build --configuration Release -- --list

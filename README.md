@@ -25,6 +25,11 @@ Its pinned upstream source and license are recorded in
 The walkthrough also validates an in-memory negative variant without BuyerReference
 (BT-10) and expects the XRechnung Schematron rule `BR-DE-15` to fail.
 
+- **[filing-service-testapps](filing-service-testapps/)**: 101 isolated C# clients
+  and matching test services, one for every Filing Service OpenAPI Datenart/Stand
+  slice. The safe default checks the selected OpenAPI contract; `--all` checks all
+  published slices.
+
 ---
 
 ## Quick Start
@@ -49,7 +54,15 @@ $env:RAPIDAPI_KEY="your-rapidapi-key"     # Windows PowerShell
 dotnet run --project invoice-api-calls/invoice-api-calls.csproj
 ```
 
+### Filing Service testapps
+~~~bash
+dotnet run --project filing-service-testapps -- --list
+dotnet run --project filing-service-testapps -- \\
+  --base-url https://your-filing-service.example --verify-catalog
+dotnet run --project filing-service-testapps -- \\
+  ustva-2026 --operation validate --payload ./payload.json
+~~~
+
 
 Sample code notice: These examples are intentionally minimal and intended to demonstrate API integration. Production applications should add appropriate error handling, secret management, retries, logging and monitoring.
-
 
