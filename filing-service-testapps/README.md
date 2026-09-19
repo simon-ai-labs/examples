@@ -4,9 +4,9 @@ This project contains one isolated C# client and one matching test service for e
 recommended Filing Service OpenAPI slice.
 
 The Filing Service currently publishes one OpenAPI document per literal
-/api/{datenart}/{stand} route. The 101 clients in FilingDataTypeClients.cs
-map one-to-one to the catalogue entries from GET /openapi/index.json.
-Each matching class in FilingDataTypeServices.cs consumes only its own client.
+/api/{datenart}/{stand} route. The 101 clients map one-to-one to the catalogue
+entries from GET /openapi/index.json. Each client, service and request type is
+kept in its own C# file; each matching service consumes only its own client.
 
 The shared base classes are transport/orchestration helpers only. Every concrete
 client declares its own request records and its own `GetOpenApiDocumentAsync`,

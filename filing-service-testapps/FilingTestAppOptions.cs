@@ -91,12 +91,3 @@ public sealed class FilingTestAppOptions
         };
     }
 }
-
-public enum FilingTestOperation
-{
-    Contract,
-    Validate,
-    Preview,
-    Simulate,
-    Submit
-}
