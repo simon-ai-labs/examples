@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 
 namespace FilingService.TestApps;
 
+/// <summary>Shared HTTP transport only. Fachliche operations belong to the concrete client.</summary>
 public abstract class FilingApiClientBase(HttpClient httpClient)
 {
     protected HttpClient HttpClient { get; } = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
@@ -12,52 +13,14 @@ public abstract class FilingApiClientBase(HttpClient httpClient)
     public abstract string RoutePrefix { get; }
     public string OpenApiPath => $"openapi/{AppName}.json";
 
-    public Task<JsonDocument> GetOpenApiDocumentAsync(CancellationToken cancellationToken = default) =>
+    protected Task<JsonDocument> GetOpenApiDocumentCoreAsync(CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Get, OpenApiPath, null, cancellationToken);
 
-    public Task<JsonDocument> ValidateAsync(JsonNode data, CancellationToken cancellationToken = default) =>
-        SendAsync(HttpMethod.Post, $"{RoutePrefix}/validate", new JsonObject { ["data"] = data.DeepClone() }, cancellationToken);
-
-    public Task<JsonDocument> PreviewAsync(JsonNode data, CancellationToken cancellationToken = default) =>
-        SendAsync(HttpMethod.Post, $"{RoutePrefix}/preview", new JsonObject { ["data"] = data.DeepClone() }, cancellationToken);
-
-    public Task<JsonDocument> SimulateAsync(
-        JsonNode data,
-        string certificateBase64,
-        string pin,
+    protected Task<JsonDocument> PostJsonAsync(
+        string relativePath,
+        JsonNode payload,
         CancellationToken cancellationToken = default) =>
-        SendAsync(
-            HttpMethod.Post,
-            $"{RoutePrefix}/filings",
-            CreateFilingRequest(data, certificateBase64, pin, simulation: true),
-            cancellationToken);
-
-    public Task<JsonDocument> SubmitAsync(
-        JsonNode data,
-        string certificateBase64,
-        string pin,
-        CancellationToken cancellationToken = default) =>
-        SendAsync(
-            HttpMethod.Post,
-            $"{RoutePrefix}/filings",
-            CreateFilingRequest(data, certificateBase64, pin, simulation: false),
-            cancellationToken);
-
-    private static JsonObject CreateFilingRequest(
-        JsonNode data,
-        string certificateBase64,
-        string pin,
-        bool simulation) =>
-        new()
-        {
-            ["data"] = data.DeepClone(),
-            ["certificate"] = new JsonObject
-            {
-                ["pfx"] = certificateBase64,
-                ["pin"] = pin
-            },
-            ["simulation"] = simulation
-        };
+        SendAsync(HttpMethod.Post, relativePath, payload, cancellationToken);
 
     private async Task<JsonDocument> SendAsync(
         HttpMethod method,
@@ -82,3 +45,4 @@ public abstract class FilingApiClientBase(HttpClient httpClient)
         return JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? "{}" : body);
     }
 }
+
