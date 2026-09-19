@@ -4,6 +4,8 @@ using FilingService.TestApps.Models;
 using FilingService.TestApps.Services;
 using System.Text.Json;
 
+namespace FilingService.TestApps.Application;
+
 public static class FilingTestAppHost
 {
     public static async Task<int> RunAsync(string[] args)
