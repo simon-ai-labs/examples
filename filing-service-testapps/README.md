@@ -8,6 +8,15 @@ The Filing Service currently publishes one OpenAPI document per literal
 entries from GET /openapi/index.json. Each client, service and request type is
 kept in its own C# file; each matching service consumes only its own client.
 
+The project is organized by responsibility:
+
+- `Clients/`: one HTTP client per OpenAPI document
+- `Models/`: document-specific request records and registrations
+- `Services/`: one service per OpenAPI document plus orchestration helpers
+- `Infrastructure/`: transport, catalog discovery and registration attributes
+- `Configuration/`: command-line and operation configuration
+- `Application/`: process-level testapp host
+
 The shared base classes are transport/orchestration helpers only. Every concrete
 client declares its own request records and its own `GetOpenApiDocumentAsync`,
 `ValidateAsync`, `PreviewAsync`, `SimulateAsync` and `SubmitAsync` calls. Every
