@@ -8,6 +8,13 @@ The Filing Service currently publishes one OpenAPI document per literal
 map one-to-one to the catalogue entries from GET /openapi/index.json.
 Each matching class in FilingDataTypeServices.cs consumes only its own client.
 
+The shared base classes are transport/orchestration helpers only. Every concrete
+client declares its own request records and its own `GetOpenApiDocumentAsync`,
+`ValidateAsync`, `PreviewAsync`, `SimulateAsync` and `SubmitAsync` calls. Every
+concrete service exposes the same document-specific request types and delegates
+only to its matching client. This keeps the OpenAPI document, client, service
+and tax/data-type operations together in one explicit slice.
+
 ## Run
 
 The default operation is a safe contract smoke test for ustva-2026:
@@ -49,4 +56,3 @@ service unless an intentional real filing is being tested.
 
 Configuration can also be supplied through FILING_SERVICE_BASE_URL,
 FILING_SERVICE_API_KEY, FILING_SERVICE_API_KEY_HEADER and FILING_SERVICE_PIN.
-
