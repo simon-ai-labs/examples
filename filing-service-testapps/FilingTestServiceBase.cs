@@ -3,27 +3,40 @@ using System.Text.Json.Nodes;
 
 namespace FilingService.TestApps;
 
-public abstract class FilingTestServiceBase(FilingApiClientBase client)
+public abstract class FilingTestServiceBase
 {
-    protected FilingApiClientBase Client { get; } = client ?? throw new ArgumentNullException(nameof(client));
     public abstract string AppName { get; }
+    public abstract string RoutePrefix { get; }
+    public string OpenApiPath => $"openapi/{AppName}.json";
 
-    public async Task<int> RunAsync(
+    public abstract Task<JsonDocument> GetOpenApiDocumentAsync(CancellationToken cancellationToken = default);
+
+    public abstract Task<int> RunAsync(
         FilingTestOperation operation,
         string? payloadPath,
         string? certificatePath,
-        string? pin)
+        string? pin);
+
+    protected async Task<int> ExecuteAsync(
+        FilingTestOperation operation,
+        string? payloadPath,
+        string? certificatePath,
+        string? pin,
+        Func<JsonNode, CancellationToken, Task<JsonDocument>> validate,
+        Func<JsonNode, CancellationToken, Task<JsonDocument>> preview,
+        Func<JsonNode, string, string, CancellationToken, Task<JsonDocument>> simulate,
+        Func<JsonNode, string, string, CancellationToken, Task<JsonDocument>> submit)
     {
         if (operation == FilingTestOperation.Contract)
         {
-            using var document = await Client.GetOpenApiDocumentAsync();
+            using var document = await GetOpenApiDocumentAsync();
             var root = document.RootElement;
             var pathCount = root.TryGetProperty("paths", out var paths) ? paths.EnumerateObject().Count() : 0;
             var schemaCount = root.TryGetProperty("components", out var components)
                 && components.TryGetProperty("schemas", out var schemas)
                 ? schemas.EnumerateObject().Count()
                 : 0;
-            Console.WriteLine($"{AppName}: {Client.OpenApiPath} ({pathCount} paths, {schemaCount} schemas)");
+            Console.WriteLine($"{AppName}: {OpenApiPath} ({pathCount} paths, {schemaCount} schemas)");
             return 0;
         }
 
@@ -32,23 +45,31 @@ public abstract class FilingTestServiceBase(FilingApiClientBase client)
             throw new ArgumentException($"--payload is required for {operation}.");
         }
 
-        var payload = await LoadPayloadAsync(payloadPath);
-        using var response = operation switch
+        var data = await LoadPayloadAsync(payloadPath);
+        var response = operation switch
         {
-            FilingTestOperation.Validate => await Client.ValidateAsync(payload),
-            FilingTestOperation.Preview => await Client.PreviewAsync(payload),
-            FilingTestOperation.Simulate => await Client.SimulateAsync(
-                payload,
+            FilingTestOperation.Validate => await validate(data, CancellationToken.None),
+            FilingTestOperation.Preview => await preview(data, CancellationToken.None),
+            FilingTestOperation.Simulate => await simulate(
+                data,
                 await LoadCertificateAsync(certificatePath),
-                RequirePin(pin)),
-            FilingTestOperation.Submit => await Client.SubmitAsync(
-                payload,
+                RequirePin(pin),
+                CancellationToken.None),
+            FilingTestOperation.Submit => await submit(
+                data,
                 await LoadCertificateAsync(certificatePath),
-                RequirePin(pin)),
+                RequirePin(pin),
+                CancellationToken.None),
             _ => throw new ArgumentOutOfRangeException(nameof(operation))
         };
 
-        Console.WriteLine(JsonSerializer.Serialize(response.RootElement, new JsonSerializerOptions { WriteIndented = true }));
+        using (response)
+        {
+            Console.WriteLine(JsonSerializer.Serialize(
+                response.RootElement,
+                new JsonSerializerOptions { WriteIndented = true }));
+        }
+
         return 0;
     }
 
@@ -70,10 +91,8 @@ public abstract class FilingTestServiceBase(FilingApiClientBase client)
     }
 
     private static string RequirePin(string? pin) =>
-        !string.IsNullOrEmpty(pin) ? pin : throw new ArgumentException("--pin or FILING_SERVICE_PIN is required.");
+        !string.IsNullOrEmpty(pin)
+            ? pin
+            : throw new ArgumentException("--pin or FILING_SERVICE_PIN is required.");
 }
 
-public abstract class FilingTestService<TClient>(TClient client) : FilingTestServiceBase(client)
-    where TClient : FilingApiClientBase
-{
-}
