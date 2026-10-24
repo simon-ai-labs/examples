@@ -16,15 +16,10 @@ public static class Program
     {
         if (args.Length > 0 && string.Equals(args[0], "mcp", StringComparison.OrdinalIgnoreCase))
         {
-            var baseUrl = args.Length > 1
-                ? args[1]
-                : Environment.GetEnvironmentVariable("INVOICE_API_BASE_URL") ?? "http://localhost:5000";
-            var apiKey = args.Length > 2
-                ? args[2]
-                : Environment.GetEnvironmentVariable("INVOICE_API_KEY");
+            var (baseUrl, apiKey) = ConfigurationHelper.ResolveConnectionSettings(args.Skip(1).Take(2).ToArray());
             var invoiceJsonPath = args.Length > 3
                 ? args[3]
-                : Environment.GetEnvironmentVariable("INVOICE_CANONICAL_JSON_PATH");
+                : ConfigurationHelper.GetSetting("INVOICE_CANONICAL_JSON_PATH");
             var endpoint = CreateMcpEndpoint(baseUrl);
 
             Console.WriteLine("==============================================================");
@@ -44,28 +39,28 @@ public static class Program
             }
         }
 
+        var restArgs = args.Length > 0 && string.Equals(args[0], "rest", StringComparison.OrdinalIgnoreCase)
+            ? args.Skip(1).ToArray()
+            : args;
+        var (restBaseUrl, restApiKey) = ConfigurationHelper.ResolveConnectionSettings(restArgs);
+
         Console.WriteLine("==================================================================");
-        Console.WriteLine("    RapidAPI E-Invoicing Service — Step-by-Step Walkthrough      ");
-        Console.WriteLine("    https://rapidapi.com/schickmaster/api/european-german-e-invoicing-service");
+        Console.WriteLine("    Invoice Services — REST API Walkthrough");
         Console.WriteLine("==================================================================\n");
 
-        // 1. Resolve configuration (CLI args -> .env -> User Secrets -> Environment Variables)
-        var (baseUrl, host, apiKey, isLocal) = ConfigurationHelper.ResolveConnectionSettings(args);
-
-        // 2. Setup HTTP Client
-        using var client = new HttpClient { BaseAddress = new Uri(baseUrl) };
-
-        if (!isLocal && !string.IsNullOrWhiteSpace(apiKey))
+        using var client = new HttpClient { BaseAddress = new Uri(restBaseUrl) };
+        if (!string.IsNullOrWhiteSpace(restApiKey))
         {
-            client.DefaultRequestHeaders.Add("x-rapidapi-key", apiKey);
-            client.DefaultRequestHeaders.Add("x-rapidapi-host", host);
+            client.DefaultRequestHeaders.Add("X-API-Key", restApiKey);
+        }
+        else if (!IsLocalUrl(restBaseUrl))
+        {
+            Console.WriteLine("Notice: No INVOICE_API_KEY supplied. A Marketplace deployment will reject unauthenticated requests.\n");
         }
 
-        // 3. Initialize services
         var apiClient = new EInvoicingApiClient(client, JsonOptions);
         var walkthrough = new EInvoicingWalkthroughService(apiClient);
 
-        // 4. Execute the step-by-step walkthrough
         try
         {
             return await walkthrough.RunAllStepsAsync();
@@ -73,11 +68,15 @@ public static class Program
         catch (Exception ex)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"\n[ERROR] Walkthrough failed: {ex.Message}");
+            Console.WriteLine($"\n[ERROR] REST walkthrough failed: {ex.Message}");
             Console.ResetColor();
             return 1;
         }
     }
+
+    private static bool IsLocalUrl(string baseUrl) =>
+        Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri)
+        && (uri.IsLoopback || string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase));
 
     private static Uri CreateMcpEndpoint(string baseUrl)
     {
