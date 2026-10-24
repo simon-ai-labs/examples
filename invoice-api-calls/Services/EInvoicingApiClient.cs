@@ -31,7 +31,7 @@ public sealed class EInvoicingApiClient(HttpClient client, JsonSerializerOptions
             }
         };
 
-        using var response = await client.PostAsJsonAsync("/v1/invoices/validate", request, jsonOptions);
+        using var response = await PostAsJsonWithIdempotencyKeyAsync("/v1/invoices/validate", request);
         return await response.Content.ReadFromJsonAsync<JsonNode>(jsonOptions);
     }
 
@@ -47,7 +47,7 @@ public sealed class EInvoicingApiClient(HttpClient client, JsonSerializerOptions
             }
         };
 
-        using var response = await client.PostAsJsonAsync("/v1/invoices/read", request, jsonOptions);
+        using var response = await PostAsJsonWithIdempotencyKeyAsync("/v1/invoices/read", request);
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
@@ -73,7 +73,7 @@ public sealed class EInvoicingApiClient(HttpClient client, JsonSerializerOptions
             ["target"] = target
         };
 
-        using var response = await client.PostAsJsonAsync("/v1/invoices/convert", request, jsonOptions);
+        using var response = await PostAsJsonWithIdempotencyKeyAsync("/v1/invoices/convert", request);
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
@@ -101,7 +101,7 @@ public sealed class EInvoicingApiClient(HttpClient client, JsonSerializerOptions
             ["outputFormat"] = outputFormat
         };
 
-        using var response = await client.PostAsJsonAsync("/v1/invoices/render", request, jsonOptions);
+        using var response = await PostAsJsonWithIdempotencyKeyAsync("/v1/invoices/render", request);
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync();
@@ -111,5 +111,15 @@ public sealed class EInvoicingApiClient(HttpClient client, JsonSerializerOptions
         var result = await response.Content.ReadFromJsonAsync<JsonNode>(jsonOptions);
         return result?["content"]?.GetValue<string>()
             ?? throw new InvalidOperationException($"Rendered {outputFormat} content is missing in API response.");
+    }
+
+    private async Task<HttpResponseMessage> PostAsJsonWithIdempotencyKeyAsync(string path, JsonNode request)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Post, path)
+        {
+            Content = JsonContent.Create(request, options: jsonOptions)
+        };
+        message.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("N"));
+        return await client.SendAsync(message);
     }
 }
