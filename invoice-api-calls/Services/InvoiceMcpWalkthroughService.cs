@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 
 namespace InvoiceServices.Samples.Services;
@@ -146,7 +147,7 @@ public sealed class InvoiceMcpWalkthroughService(Uri endpoint, string? apiKey, s
         Console.WriteLine($"\n▶ Calling MCP tool: {toolName}");
         Console.ResetColor();
 
-        var result = await tool.InvokeAsync(arguments);
+        var result = await tool.InvokeAsync(new AIFunctionArguments(arguments));
         Console.WriteLine(JsonSerializer.Serialize(result, JsonOptions));
     }
 }
