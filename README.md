@@ -4,9 +4,9 @@ Sample code for the E-Invoicing Service, which validates, reads, generates, conv
 
 ## Projects
 
-- **[invoice-api-calls](invoice-api-calls/)**: .NET console walkthrough for the REST API and the MCP interface.
+- **[invoice-api-calls](invoice-api-calls/)**: .NET console walkthrough for the REST API and MCP interface.
   - REST mode demonstrates capabilities, invoice validation, reading, conversion and rendering.
-  - MCP mode connects to the service over Streamable HTTP, lists the available tools and invokes the invoice operations.
+  - MCP mode connects to the service over Streamable HTTP, lists available tools and invokes the invoice operations.
   - Optional canonical invoice JSON demonstrates the `generate_invoice` tool.
 
 The bundled `01.06_minimal_test_ubl.xml` is an unmodified positive reference
@@ -21,7 +21,7 @@ The walkthrough also validates an in-memory negative variant without BuyerRefere
 ### Prerequisites
 
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
-- Access to an E-Invoicing Service deployment
+- Access to an Invoice Services API deployment
 - An `X-API-Key` for Marketplace deployments
 
 ### Build
@@ -32,11 +32,19 @@ dotnet build examples.sln
 
 ### Run the REST walkthrough
 
-The existing REST walkthrough uses RapidAPI configuration:
+For a local service:
 
 ```bash
-dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- <YOUR_RAPIDAPI_KEY>
+dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- rest http://localhost:5000
 ```
+
+For a Marketplace deployment:
+
+```bash
+dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- rest https://your-invoice-service.example.com <YOUR_API_KEY>
+```
+
+The REST walkthrough sends an `Idempotency-Key` with each document operation. The API key can also be provided with the `INVOICE_API_KEY` environment variable or .NET User Secrets. The base URL can be set with `INVOICE_API_BASE_URL`.
 
 ### Run the MCP walkthrough
 
@@ -60,9 +68,10 @@ export INVOICE_API_KEY="your-api-key"
 dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- mcp
 ```
 
-The MCP walkthrough calls `invoice_capabilities`, `validate_invoice`,
-`read_invoice`, `convert_invoice` and `render_invoice` using the bundled
-KoSIT sample invoice. To also call `generate_invoice`, point
+Each MCP tool call sends its own `Idempotency-Key`. The walkthrough calls
+`invoice_capabilities`, `validate_invoice`, `read_invoice`,
+`convert_invoice` and `render_invoice` using the bundled KoSIT sample
+invoice. To also call `generate_invoice`, point
 `INVOICE_CANONICAL_JSON_PATH` to a JSON file containing an `InvoiceDto`:
 
 ```bash
