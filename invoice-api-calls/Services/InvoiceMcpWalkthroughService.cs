@@ -15,37 +15,27 @@ public sealed class InvoiceMcpWalkthroughService(Uri endpoint, string? apiKey, s
 
     public async Task<int> RunAsync()
     {
-        var headers = new Dictionary<string, string>();
-        if (!string.IsNullOrWhiteSpace(apiKey))
+        var discoveryTransport = CreateTransport(Guid.NewGuid().ToString("N"));
+        await using (var discoveryClient = await McpClient.CreateAsync(discoveryTransport))
         {
-            headers["X-API-Key"] = apiKey;
+            var tools = await discoveryClient.ListToolsAsync();
+
+            Console.WriteLine($"Connected to MCP endpoint: {endpoint}");
+            Console.WriteLine("Available invoice tools:");
+            foreach (var tool in tools)
+            {
+                Console.WriteLine($"  - {tool.Name}: {tool.Description}");
+            }
         }
 
-        var transport = new HttpClientTransport(new HttpClientTransportOptions
-        {
-            Endpoint = endpoint,
-            TransportMode = HttpTransportMode.StreamableHttp,
-            AdditionalHeaders = headers
-        });
-
-        await using var client = await McpClient.CreateAsync(transport);
-        var tools = await client.ListToolsAsync();
-
-        Console.WriteLine($"Connected to MCP endpoint: {endpoint}");
-        Console.WriteLine("Available invoice tools:");
-        foreach (var tool in tools)
-        {
-            Console.WriteLine($"  - {tool.Name}: {tool.Description}");
-        }
-
-        await InvokeAsync(client, "invoice_capabilities", new Dictionary<string, object?>());
+        await InvokeAsync("invoice_capabilities", new Dictionary<string, object?>());
 
         if (!string.IsNullOrWhiteSpace(canonicalInvoiceJsonPath))
         {
             var invoiceJson = await File.ReadAllTextAsync(canonicalInvoiceJsonPath);
             var invoice = JsonNode.Parse(invoiceJson)
                 ?? throw new InvalidOperationException("The canonical invoice JSON file is empty.");
-            await InvokeAsync(client, "generate_invoice", new Dictionary<string, object?>
+            await InvokeAsync("generate_invoice", new Dictionary<string, object?>
             {
                 ["request"] = new Dictionary<string, object?>
                 {
@@ -86,17 +76,17 @@ public sealed class InvoiceMcpWalkthroughService(Uri endpoint, string? apiKey, s
             }
         };
 
-        await InvokeAsync(client, "validate_invoice", new Dictionary<string, object?>
+        await InvokeAsync("validate_invoice", new Dictionary<string, object?>
         {
             ["request"] = new Dictionary<string, object?> { ["document"] = document }
         });
 
-        await InvokeAsync(client, "read_invoice", new Dictionary<string, object?>
+        await InvokeAsync("read_invoice", new Dictionary<string, object?>
         {
             ["request"] = new Dictionary<string, object?> { ["document"] = document }
         });
 
-        await InvokeAsync(client, "convert_invoice", new Dictionary<string, object?>
+        await InvokeAsync("convert_invoice", new Dictionary<string, object?>
         {
             ["request"] = new Dictionary<string, object?>
             {
@@ -111,7 +101,7 @@ public sealed class InvoiceMcpWalkthroughService(Uri endpoint, string? apiKey, s
             }
         });
 
-        await InvokeAsync(client, "render_invoice", new Dictionary<string, object?>
+        await InvokeAsync("render_invoice", new Dictionary<string, object?>
         {
             ["request"] = new Dictionary<string, object?>
             {
@@ -124,11 +114,30 @@ public sealed class InvoiceMcpWalkthroughService(Uri endpoint, string? apiKey, s
         return 0;
     }
 
-    private static async Task InvokeAsync(
-        McpClient client,
-        string toolName,
-        Dictionary<string, object?> arguments)
+    private HttpClientTransport CreateTransport(string idempotencyKey)
     {
+        var headers = new Dictionary<string, string>
+        {
+            ["Idempotency-Key"] = idempotencyKey
+        };
+        if (!string.IsNullOrWhiteSpace(apiKey))
+        {
+            headers["X-API-Key"] = apiKey;
+        }
+
+        return new HttpClientTransport(new HttpClientTransportOptions
+        {
+            Endpoint = endpoint,
+            TransportMode = HttpTransportMode.StreamableHttp,
+            AdditionalHeaders = headers
+        });
+    }
+
+    private async Task InvokeAsync(string toolName, Dictionary<string, object?> arguments)
+    {
+        // The Marketplace quota layer requires a fresh Idempotency-Key for each document tool call.
+        var transport = CreateTransport(Guid.NewGuid().ToString("N"));
+        await using var client = await McpClient.CreateAsync(transport);
         var tool = (await client.ListToolsAsync())
             .FirstOrDefault(candidate => string.Equals(candidate.Name, toolName, StringComparison.Ordinal))
             ?? throw new InvalidOperationException($"The MCP server does not expose the expected tool '{toolName}'.");
