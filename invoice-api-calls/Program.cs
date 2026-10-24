@@ -22,6 +22,9 @@ public static class Program
             var apiKey = args.Length > 2
                 ? args[2]
                 : Environment.GetEnvironmentVariable("INVOICE_API_KEY");
+            var invoiceJsonPath = args.Length > 3
+                ? args[3]
+                : Environment.GetEnvironmentVariable("INVOICE_CANONICAL_JSON_PATH");
             var endpoint = CreateMcpEndpoint(baseUrl);
 
             Console.WriteLine("==============================================================");
@@ -30,7 +33,7 @@ public static class Program
 
             try
             {
-                return await new InvoiceMcpWalkthroughService(endpoint, apiKey).RunAsync();
+                return await new InvoiceMcpWalkthroughService(endpoint, apiKey, invoiceJsonPath).RunAsync();
             }
             catch (Exception ex)
             {
