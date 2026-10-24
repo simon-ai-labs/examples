@@ -4,25 +4,24 @@ namespace InvoiceServices.Samples.Configuration;
 
 public static class ConfigurationHelper
 {
-    private const string DefaultRapidApiHost = "european-german-e-invoicing-service.p.rapidapi.com";
-    private const string DefaultRapidApiBaseUrl = "https://european-german-e-invoicing-service.p.rapidapi.com";
+    private const string DefaultBaseUrl = "http://localhost:5000";
 
-    public static (string BaseUrl, string Host, string? ApiKey, bool IsLocal) ResolveConnectionSettings(string[] args)
+    /// <summary>
+    /// Resolves the Invoice API base URL and API key.
+    /// CLI arguments may be either [baseUrl, apiKey] or [apiKey].
+    /// </summary>
+    public static (string BaseUrl, string? ApiKey) ResolveConnectionSettings(string[] args)
     {
-        string? apiKey = null;
-        string baseUrl = DefaultRapidApiBaseUrl;
-        string host = DefaultRapidApiHost;
-        bool isLocal = false;
+        var baseUrl = GetSetting("INVOICE_API_BASE_URL") ?? DefaultBaseUrl;
+        var apiKey = GetSetting("INVOICE_API_KEY");
 
-        // 1. Check CLI arguments
         if (args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]))
         {
-            if (args[0].StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                args[0].StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            if (Uri.TryCreate(args[0], UriKind.Absolute, out var suppliedUrl)
+                && suppliedUrl.Scheme is "http" or "https")
             {
                 baseUrl = args[0].TrimEnd('/');
-                isLocal = true;
-                if (args.Length > 1)
+                if (args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]))
                 {
                     apiKey = args[1];
                 }
@@ -33,50 +32,37 @@ public static class ConfigurationHelper
             }
         }
 
-        // 2. Check local .env file
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            apiKey = TryLoadKeyFromEnvFiles();
-        }
-
-        // 3. Check .NET User Secrets
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            var config = new ConfigurationBuilder()
-                .AddUserSecrets(typeof(ConfigurationHelper).Assembly, optional: true)
-                .Build();
-            apiKey = config["RapidApiKey"] ?? config["RAPIDAPI_KEY"];
-        }
-
-        // 4. Check Environment variable
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            apiKey = Environment.GetEnvironmentVariable("RAPIDAPI_KEY");
-        }
-
-        // 5. Interactive prompt fallback
-        if (!isLocal && string.IsNullOrWhiteSpace(apiKey))
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("Notice: No RAPIDAPI_KEY supplied!");
-            Console.WriteLine("Usage: dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- <YOUR_RAPIDAPI_KEY>");
-            Console.WriteLine("Or set in .env, User Secrets, or env var RAPIDAPI_KEY.\n");
-            Console.ResetColor();
-            Console.Write("Enter your RapidAPI Key (or press ENTER to test against http://localhost:5000): ");
-            apiKey = Console.ReadLine()?.Trim();
-
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                Console.WriteLine("\nFalling back to local development URL: http://localhost:5000");
-                baseUrl = "http://localhost:5000";
-                isLocal = true;
-            }
-        }
-
-        return (baseUrl, host, apiKey, isLocal);
+        return (baseUrl, apiKey);
     }
 
-    private static string? TryLoadKeyFromEnvFiles()
+    public static string? GetSetting(string name)
+    {
+        var environmentValue = Environment.GetEnvironmentVariable(name);
+        if (!string.IsNullOrWhiteSpace(environmentValue))
+        {
+            return environmentValue;
+        }
+
+        try
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddUserSecrets(typeof(ConfigurationHelper).Assembly, optional: true)
+                .Build();
+            var secretValue = configuration[name];
+            if (!string.IsNullOrWhiteSpace(secretValue))
+            {
+                return secretValue;
+            }
+        }
+        catch
+        {
+            // User Secrets are optional for this sample.
+        }
+
+        return TryLoadSettingFromEnvFiles(name);
+    }
+
+    private static string? TryLoadSettingFromEnvFiles(string name)
     {
         string[] searchPaths =
         [
@@ -113,17 +99,18 @@ public static class ConfigurationHelper
                     }
 
                     var key = trimmed[..separatorIndex].Trim();
-                    var val = trimmed[(separatorIndex + 1)..].Trim().Trim('"', '\'');
+                    var value = trimmed[(separatorIndex + 1)..].Trim().Trim('"', '\'');
 
-                    if (string.Equals(key, "RAPIDAPI_KEY", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(val))
+                    if (string.Equals(key, name, StringComparison.OrdinalIgnoreCase)
+                        && !string.IsNullOrWhiteSpace(value))
                     {
-                        return val;
+                        return value;
                     }
                 }
             }
             catch
             {
-                // Ignore IO errors when scanning optional env paths
+                // Ignore optional .env files that cannot be read.
             }
         }
 
