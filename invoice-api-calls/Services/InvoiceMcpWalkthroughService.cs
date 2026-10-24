@@ -1,5 +1,5 @@
 using System.Text.Json;
-using InvoiceServices.Samples.Configuration;
+using System.Text.Json.Nodes;
 using ModelContextProtocol.Client;
 
 namespace InvoiceServices.Samples.Services;
@@ -8,7 +8,7 @@ namespace InvoiceServices.Samples.Services;
 /// Demonstrates calling the invoice service as an MCP server over Streamable HTTP.
 /// The REST walkthrough remains available as the default program mode.
 /// </summary>
-public sealed class InvoiceMcpWalkthroughService(Uri endpoint, string? apiKey)
+public sealed class InvoiceMcpWalkthroughService(Uri endpoint, string? apiKey, string? canonicalInvoiceJsonPath)
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
     private const string OfficialTestInvoiceFileName = "01.06_minimal_test_ubl.xml";
@@ -39,6 +39,31 @@ public sealed class InvoiceMcpWalkthroughService(Uri endpoint, string? apiKey)
         }
 
         await InvokeAsync(client, "invoice_capabilities", new Dictionary<string, object?>());
+
+        if (!string.IsNullOrWhiteSpace(canonicalInvoiceJsonPath))
+        {
+            var invoiceJson = await File.ReadAllTextAsync(canonicalInvoiceJsonPath);
+            var invoice = JsonNode.Parse(invoiceJson)
+                ?? throw new InvalidOperationException("The canonical invoice JSON file is empty.");
+            await InvokeAsync(client, "generate_invoice", new Dictionary<string, object?>
+            {
+                ["request"] = new Dictionary<string, object?>
+                {
+                    ["invoice"] = invoice,
+                    ["target"] = new Dictionary<string, object?>
+                    {
+                        ["format"] = "xRechnung",
+                        ["version"] = "3.0.2",
+                        ["profile"] = "xRechnung",
+                        ["syntax"] = "ubl"
+                    }
+                }
+            });
+        }
+        else
+        {
+            Console.WriteLine("Set INVOICE_CANONICAL_JSON_PATH to also demonstrate generate_invoice.");
+        }
 
         var invoicePath = Path.Combine(AppContext.BaseDirectory, "TestInvoices", OfficialTestInvoiceFileName);
         if (!File.Exists(invoicePath))
@@ -102,7 +127,7 @@ public sealed class InvoiceMcpWalkthroughService(Uri endpoint, string? apiKey)
     private static async Task InvokeAsync(
         McpClient client,
         string toolName,
-        IReadOnlyDictionary<string, object?> arguments)
+        Dictionary<string, object?> arguments)
     {
         var tool = (await client.ListToolsAsync())
             .FirstOrDefault(candidate => string.Equals(candidate.Name, toolName, StringComparison.Ordinal))
