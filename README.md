@@ -19,7 +19,7 @@ console project with its own README.
 dotnet build examples.sln
 ```
 
-Copy `.env.example` to `.env` to configure both samples locally. `.env` is
+Copy `.env.example` to `.env` to configure the invoice sample locally. `.env` is
 ignored by git; never commit real API keys, certificates or PINs.
 
 Sample code notice: These examples are intentionally minimal and intended to demonstrate API integration. Production applications should add appropriate error handling, secret management, retries, logging and monitoring.
