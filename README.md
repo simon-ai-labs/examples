@@ -2,6 +2,8 @@
 
 Sample code for the E-Invoicing Service, which validates, reads, generates, converts and renders XRechnung, ZUGFeRD, Peppol and EN 16931 electronic invoices.
 
+Service URL: [https://invoice-service-api.simon-ai-enterprise.de](https://invoice-service-api.simon-ai-enterprise.de) · [API documentation](https://invoice-service-api.simon-ai-enterprise.de/docs/)
+
 ## Projects
 
 - **[invoice-api-calls](invoice-api-calls/)**: .NET console walkthrough for the REST API and MCP interface.
@@ -41,7 +43,7 @@ dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- rest http://l
 For a Marketplace deployment:
 
 ```bash
-dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- rest https://your-invoice-service.example.com <YOUR_API_KEY>
+dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- rest https://invoice-service-api.simon-ai-enterprise.de <YOUR_API_KEY>
 ```
 
 The REST walkthrough sends an `Idempotency-Key` with each document operation. The API key can also be provided with the `INVOICE_API_KEY` environment variable or .NET User Secrets. The base URL can be set with `INVOICE_API_BASE_URL`.
@@ -51,7 +53,7 @@ The REST walkthrough sends an `Idempotency-Key` with each document operation. Th
 The MCP endpoint is `/mcp`. Pass the service base URL and optional Marketplace API key:
 
 ```bash
-dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- mcp https://your-invoice-service.example.com <YOUR_API_KEY>
+dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- mcp https://invoice-service-api.simon-ai-enterprise.de <YOUR_API_KEY>
 ```
 
 For local development:
@@ -63,7 +65,7 @@ dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- mcp http://lo
 MCP settings can also be supplied through environment variables:
 
 ```bash
-export INVOICE_API_BASE_URL="https://your-invoice-service.example.com"
+export INVOICE_API_BASE_URL="https://invoice-service-api.simon-ai-enterprise.de"
 export INVOICE_API_KEY="your-api-key"
 dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- mcp
 ```

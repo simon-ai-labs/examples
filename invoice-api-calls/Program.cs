@@ -46,6 +46,8 @@ public static class Program
 
         Console.WriteLine("==================================================================");
         Console.WriteLine("    Invoice Services — REST API Walkthrough");
+        Console.WriteLine("    API:  https://invoice-service-api.simon-ai-enterprise.de");
+        Console.WriteLine("    Docs: https://invoice-service-api.simon-ai-enterprise.de/docs/");
         Console.WriteLine("==================================================================\n");
 
         using var client = new HttpClient { BaseAddress = new Uri(restBaseUrl) };
