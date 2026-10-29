@@ -7,9 +7,22 @@ Service URL: [https://invoice-service-api.simon-ai-enterprise.de](https://invoic
 ## Projects
 
 - **[invoice-api-calls](invoice-api-calls/)**: .NET console walkthrough for the REST API and MCP interface. It has no request or response classes: requests are built at runtime from the service's own JSON definitions.
-  - `InvoiceRestService` reads `/docs`, follows it to the OpenAPI description, looks up each operation there and builds the request body from its schema. It demonstrates capabilities, validation, reading, conversion and rendering.
+  - `InvoiceBusinessCases` walks through every business case of the service (see below), once over each transport.
+  - `InvoiceRestService` reads `/docs`, follows it to the OpenAPI description, looks up each operation there and builds the request body from its schema.
   - `InvoiceMcpService` connects to `/mcp` over Streamable HTTP, lists the tools and builds each call's arguments from the tool's input schema.
-  - Optional canonical invoice JSON demonstrates the `generate_invoice` tool.
+
+### Business cases in the walkthrough
+
+| Business case | Endpoint · MCP tool | What the walkthrough does |
+|---|---|---|
+| Query capabilities | `GET /v1/capabilities` · `invoice_capabilities` | Lists formats, versions, syntaxes, input/output types and the profiles per operation. The versions used in all following cases are taken from here. |
+| Check an incoming invoice | `POST /v1/invoices/validate` · `validate_invoice` | Validates the KoSIT test invoice (XSD, EN 16931 and XRechnung Schematron, code lists, calculation rules), then a variant without BuyerReference (BT-10) and expects rule `BR-DE-15` with its BT path, the reason to reject the invoice. Generated invoices are validated too, which includes PDF/A-3b for hybrid PDFs. |
+| Read an incoming invoice | `POST /v1/invoices/read` · `read_invoice` | Turns the XML into the canonical JSON model (`InvoiceDto`) with detected representation and validation result, as for an ERP import. Saved as `invoice.json`. |
+| Generate an outgoing invoice | `POST /v1/invoices/generate` · `generate_invoice` | Generates an XRechnung UBL (B2G) and a ZUGFeRD EN 16931 invoice (B2B) from the JSON read before, or from `INVOICE_CANONICAL_JSON_PATH`. Prints warnings and validates the result. |
+| Convert the format | `POST /v1/invoices/convert` · `convert_invoice` | Converts XRechnung UBL to XRechnung CII and to ZUGFeRD EN 16931 and prints the warnings for information lost in the conversion. |
+| Render the invoice for people | `POST /v1/invoices/render` · `render_invoice` | Renders the converted XRechnung as HTML and PDF for a visual check, an approval workflow or an archive view. |
+
+All results are written to `output/rest` and `output/mcp`.
 
 The bundled `01.06_minimal_test_ubl.xml` is an unmodified positive reference
 invoice from the official [KoSIT XRechnung Test Suite](https://github.com/itplr-kosit/xrechnung-testsuite).
@@ -78,11 +91,9 @@ export INVOICE_API_KEY="your-api-key"
 dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- mcp
 ```
 
-Each MCP tool call sends its own `Idempotency-Key`. The walkthrough calls
-`invoice_capabilities`, `validate_invoice`, `read_invoice`,
-`convert_invoice` and `render_invoice` using the bundled KoSIT sample
-invoice. To also call `generate_invoice`, point
-`INVOICE_CANONICAL_JSON_PATH` to a JSON file containing an `InvoiceDto`:
+Each MCP tool call sends its own `Idempotency-Key`. Both walkthroughs run all
+business cases. `generate_invoice` uses the invoice read from the KoSIT sample
+unless `INVOICE_CANONICAL_JSON_PATH` points to your own JSON file containing an `InvoiceDto`:
 
 ```bash
 export INVOICE_CANONICAL_JSON_PATH="./invoice.json"

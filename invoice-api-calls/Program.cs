@@ -6,6 +6,7 @@ var mode = args.FirstOrDefault()?.ToLowerInvariant() is "rest" or "mcp" ? args[0
 var (baseUrl, apiKey) = ConfigurationHelper.ResolveConnectionSettings(mode is null ? args : args[1..]);
 var invoicePath = Path.Combine(AppContext.BaseDirectory, "TestInvoices", "01.06_minimal_test_ubl.xml");
 var baseUri = new Uri(baseUrl.TrimEnd('/') + "/");
+var canonicalInvoiceJsonPath = ConfigurationHelper.GetSetting("INVOICE_CANONICAL_JSON_PATH");
 
 Console.WriteLine($"Invoice Services: {baseUri} (docs: {new Uri(baseUri, "docs/")})");
 if (string.IsNullOrWhiteSpace(apiKey))
@@ -20,13 +21,12 @@ try
     {
         // PDF rendering under load can take longer than HttpClient's default 100 seconds.
         using var http = new HttpClient { BaseAddress = baseUri, Timeout = TimeSpan.FromMinutes(4) };
-        exitCode |= await new InvoiceRestService(http, apiKey, invoicePath).RunAsync();
+        exitCode |= await new InvoiceRestService(http, apiKey, invoicePath, canonicalInvoiceJsonPath).RunAsync();
     }
 
     if (mode is null or "mcp")
     {
-        exitCode |= await new InvoiceMcpService(new Uri(baseUri, "mcp"), apiKey, invoicePath,
-            ConfigurationHelper.GetSetting("INVOICE_CANONICAL_JSON_PATH")).RunAsync();
+        exitCode |= await new InvoiceMcpService(new Uri(baseUri, "mcp"), apiKey, invoicePath, canonicalInvoiceJsonPath).RunAsync();
     }
 
     return exitCode;
