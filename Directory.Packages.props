@@ -1,0 +1,19 @@
+<Project>
+  <!-- Central package management: every project in the repository uses these versions. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Kiota.Bundle" Version="2.1.2" />
+    <PackageVersion Include="Microsoft.OpenApi" Version="3.11.0" />
+    <PackageVersion Include="ModelContextProtocol" Version="2.3.0" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.14" />
+    <!-- Tests -->
+    <PackageVersion Include="xunit.v3" Version="4.0.2" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,2243 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "European & German E-Invoicing Service",
+    "description": "Business operations on electronic invoices: validate, generate, read, convert, and render. Endpoints are organized by what the caller wants to do with an invoice, not by the underlying standard or engine. Supported standards and their pinned versions are reported by GET /v1/capabilities. Marketplace customers can sign in and manage API keys at https://invoice-service-api.simon-ai-enterprise.de/portal.",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "https://invoice-service-api.simon-ai-enterprise.de/"
+    }
+  ],
+  "paths": {
+    "/v1/capabilities": {
+      "get": {
+        "tags": [
+          "Capabilities"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitiesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "MarketplaceApiKey": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/invoices/convert": {
+      "post": {
+        "tags": [
+          "InvoiceConversion"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertInvoiceRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertInvoiceRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertInvoiceRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertInvoiceResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertInvoiceResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertInvoiceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "MarketplaceApiKey": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/invoices/generate": {
+      "post": {
+        "tags": [
+          "InvoiceGeneration"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateInvoiceRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateInvoiceRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateInvoiceRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateInvoiceResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateInvoiceResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateInvoiceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "MarketplaceApiKey": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/invoices/read": {
+      "post": {
+        "tags": [
+          "InvoiceRead"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadInvoiceRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadInvoiceRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadInvoiceRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadInvoiceResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadInvoiceResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadInvoiceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "MarketplaceApiKey": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/invoices/render": {
+      "post": {
+        "tags": [
+          "InvoiceRendering"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenderInvoiceRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenderInvoiceRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenderInvoiceRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenderInvoiceResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenderInvoiceResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenderInvoiceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "MarketplaceApiKey": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/invoices/validate": {
+      "post": {
+        "tags": [
+          "InvoiceValidation"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateInvoiceRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateInvoiceRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateInvoiceRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateInvoiceResponseDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateInvoiceResponseDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateInvoiceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "MarketplaceApiKey": [ ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AllowanceChargeDto": {
+        "required": [
+          "isCharge",
+          "amount",
+          "baseAmount",
+          "percentage",
+          "reason",
+          "reasonCode",
+          "vatCategory"
+        ],
+        "type": "object",
+        "properties": {
+          "isCharge": {
+            "type": "boolean"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "baseAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "percentage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "vatCategory": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VatCategoryDto"
+              }
+            ]
+          }
+        }
+      },
+      "ApiInvoiceFormat": {
+        "enum": [
+          "xRechnung",
+          "zugferd",
+          "peppol"
+        ],
+        "type": "string"
+      },
+      "ApiInvoiceInputType": {
+        "enum": [
+          "electronicDocument",
+          "canonicalInvoice"
+        ],
+        "type": "string"
+      },
+      "ApiInvoiceOperation": {
+        "enum": [
+          "validate",
+          "generate",
+          "read",
+          "convert",
+          "render"
+        ],
+        "type": "string"
+      },
+      "ApiInvoiceOutputType": {
+        "enum": [
+          "validationResult",
+          "electronicDocument",
+          "canonicalInvoice",
+          "html",
+          "pdf"
+        ],
+        "type": "string"
+      },
+      "ApiInvoiceProfile": {
+        "enum": [
+          "xRechnung",
+          "minimum",
+          "basicWl",
+          "basic",
+          "en16931",
+          "extended",
+          "peppolBilling"
+        ],
+        "type": "string"
+      },
+      "ApiInvoiceSyntax": {
+        "enum": [
+          "ubl",
+          "cii"
+        ],
+        "type": "string"
+      },
+      "ApiRenderOutputFormat": {
+        "enum": [
+          "html",
+          "pdf"
+        ],
+        "type": "string"
+      },
+      "ApiValidationSeverity": {
+        "enum": [
+          "error",
+          "warning",
+          "information"
+        ],
+        "type": "string"
+      },
+      "CapabilitiesResponse": {
+        "required": [
+          "apiVersion",
+          "operations",
+          "standards"
+        ],
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "type": "string"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiInvoiceOperation"
+            }
+          },
+          "standards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StandardCapabilityDto"
+            }
+          }
+        }
+      },
+      "ContactDto": {
+        "required": [
+          "name",
+          "telephone",
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "telephone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "ConvertInvoiceRequestDto": {
+        "required": [
+          "document",
+          "target"
+        ],
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/DocumentInputDto"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ConvertTargetDto"
+          }
+        }
+      },
+      "ConvertInvoiceResponseDto": {
+        "required": [
+          "document",
+          "warnings"
+        ],
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/GeneratedDocumentDto"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperationWarningDto"
+            }
+          }
+        }
+      },
+      "ConvertTargetDto": {
+        "required": [
+          "format",
+          "version",
+          "profile",
+          "syntax"
+        ],
+        "type": "object",
+        "properties": {
+          "format": {
+            "$ref": "#/components/schemas/ApiInvoiceFormat"
+          },
+          "version": {
+            "type": "string"
+          },
+          "profile": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiInvoiceProfile"
+              }
+            ]
+          },
+          "syntax": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiInvoiceSyntax"
+              }
+            ]
+          }
+        }
+      },
+      "CreditTransferDto": {
+        "required": [
+          "accountId",
+          "accountName",
+          "serviceProviderId"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "serviceProviderId": {
+            "type": "string"
+          }
+        },
+        "description": "BG-17 CREDIT TRANSFER. `AccountId` is BT-84, `AccountName` is BT-85 and\n`ServiceProviderId` is BT-86, the BIC of the bank holding that one account."
+      },
+      "DeliveryInformationDto": {
+        "required": [
+          "actualDeliveryDate",
+          "locationId",
+          "address"
+        ],
+        "type": "object",
+        "properties": {
+          "actualDeliveryDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "locationId": {
+            "type": "string"
+          },
+          "address": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PostalAddressDto"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "BT-70, the name of the party the goods are delivered to."
+          },
+          "locationSchemeIdentifier": {
+            "type": "string",
+            "description": "BT-71-1, the scheme the delivery location identifier is drawn from."
+          }
+        }
+      },
+      "DocumentInputDto": {
+        "required": [
+          "content",
+          "fileName",
+          "contentType",
+          "expectedRepresentation"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "format": "byte"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "expectedRepresentation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InvoiceRepresentationDto"
+              }
+            ]
+          }
+        }
+      },
+      "ElectronicAddressDto": {
+        "required": [
+          "schemeId",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "schemeId": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "GeneratedDocumentDto": {
+        "required": [
+          "content",
+          "contentType",
+          "fileName",
+          "representation"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "format": "byte"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "representation": {
+            "$ref": "#/components/schemas/InvoiceRepresentationDto"
+          }
+        }
+      },
+      "GenerateInvoiceRequestDto": {
+        "required": [
+          "invoice",
+          "target"
+        ],
+        "type": "object",
+        "properties": {
+          "invoice": {
+            "$ref": "#/components/schemas/InvoiceDto"
+          },
+          "target": {
+            "$ref": "#/components/schemas/GenerateTargetDto"
+          }
+        }
+      },
+      "GenerateInvoiceResponseDto": {
+        "required": [
+          "document",
+          "warnings"
+        ],
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/GeneratedDocumentDto"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperationWarningDto"
+            }
+          }
+        }
+      },
+      "GenerateTargetDto": {
+        "required": [
+          "format",
+          "version",
+          "profile",
+          "syntax"
+        ],
+        "type": "object",
+        "properties": {
+          "format": {
+            "$ref": "#/components/schemas/ApiInvoiceFormat"
+          },
+          "version": {
+            "type": "string"
+          },
+          "profile": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiInvoiceProfile"
+              }
+            ]
+          },
+          "syntax": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiInvoiceSyntax"
+              }
+            ]
+          }
+        }
+      },
+      "InvoiceDto": {
+        "required": [
+          "typeCode",
+          "invoiceId",
+          "issueDate",
+          "dueDate",
+          "invoiceCurrency",
+          "taxCurrency",
+          "seller",
+          "buyer",
+          "sellerTaxRepresentative",
+          "payment",
+          "buyerReference",
+          "purchaseOrderReference",
+          "contractReference",
+          "projectReference",
+          "precedingInvoiceReferences",
+          "delivery",
+          "lines",
+          "allowancesCharges",
+          "vatBreakdowns",
+          "totals",
+          "notes",
+          "supportingDocuments"
+        ],
+        "type": "object",
+        "properties": {
+          "typeCode": {
+            "type": "string"
+          },
+          "invoiceId": {
+            "type": "string"
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "invoiceCurrency": {
+            "type": "string"
+          },
+          "taxCurrency": {
+            "type": "string"
+          },
+          "seller": {
+            "$ref": "#/components/schemas/PartyDto"
+          },
+          "buyer": {
+            "$ref": "#/components/schemas/PartyDto"
+          },
+          "sellerTaxRepresentative": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PartyDto"
+              }
+            ]
+          },
+          "payment": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PaymentInstructionsDto"
+              }
+            ]
+          },
+          "buyerReference": {
+            "type": "string"
+          },
+          "purchaseOrderReference": {
+            "type": "string"
+          },
+          "contractReference": {
+            "type": "string"
+          },
+          "projectReference": {
+            "type": "string"
+          },
+          "precedingInvoiceReferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrecedingInvoiceReferenceDto"
+            }
+          },
+          "delivery": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DeliveryInformationDto"
+              }
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineDto"
+            }
+          },
+          "allowancesCharges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllowanceChargeDto"
+            }
+          },
+          "vatBreakdowns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VatBreakdownDto"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/MonetaryTotalsDto"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceNoteDto"
+            }
+          },
+          "supportingDocuments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportingDocumentDto"
+            }
+          },
+          "paymentTerms": {
+            "type": "string"
+          },
+          "projectName": {
+            "type": "string"
+          },
+          "specificationIdentifier": {
+            "type": "string"
+          },
+          "businessProcessIdentifier": {
+            "type": "string"
+          },
+          "tenderOrLotReference": {
+            "type": "string"
+          },
+          "invoicedObject": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "BT-18 / BT-18-1.",
+                "$ref": "#/components/schemas/QualifiedIdentifierDto"
+              }
+            ]
+          },
+          "thirdPartyPayments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ThirdPartyPaymentDto"
+            }
+          },
+          "taxPointDate": {
+            "type": "string",
+            "description": "BT-7, the date on which VAT becomes accountable.",
+            "format": "date"
+          },
+          "taxPointDateCode": {
+            "type": "string",
+            "description": "BT-8, the VAT point date code from UNTDID 2005."
+          },
+          "salesOrderReference": {
+            "type": "string",
+            "description": "BT-14, the sales order reference."
+          },
+          "receivingAdviceReference": {
+            "type": "string",
+            "description": "BT-15, the receiving advice reference."
+          },
+          "despatchAdviceReference": {
+            "type": "string",
+            "description": "BT-16, the despatch advice reference."
+          },
+          "buyerAccountingReference": {
+            "type": "string",
+            "description": "BT-19, the buyer accounting reference."
+          },
+          "period": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "BG-14 INVOICING PERIOD (BT-73 / BT-74).",
+                "$ref": "#/components/schemas/InvoicingPeriodDto"
+              }
+            ]
+          },
+          "payee": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "BG-10 PAYEE (BT-59 / BT-60 / BT-61).",
+                "$ref": "#/components/schemas/PayeeDto"
+              }
+            ]
+          }
+        }
+      },
+      "InvoiceLineDto": {
+        "required": [
+          "lineId",
+          "quantity",
+          "unitCode",
+          "netUnitPrice",
+          "grossUnitPrice",
+          "lineNetAmount",
+          "item",
+          "allowancesCharges",
+          "purchaseOrderLineReference",
+          "accountingCost"
+        ],
+        "type": "object",
+        "properties": {
+          "lineId": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "unitCode": {
+            "type": "string"
+          },
+          "netUnitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "grossUnitPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "lineNetAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "item": {
+            "$ref": "#/components/schemas/ItemDto"
+          },
+          "allowancesCharges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllowanceChargeDto"
+            }
+          },
+          "purchaseOrderLineReference": {
+            "type": "string"
+          },
+          "accountingCost": {
+            "type": "string"
+          },
+          "invoicedObject": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "BT-128 / BT-128-1.",
+                "$ref": "#/components/schemas/QualifiedIdentifierDto"
+              }
+            ]
+          },
+          "note": {
+            "type": "string",
+            "description": "BT-127, a free-text note about the line."
+          },
+          "period": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "BG-26 INVOICE LINE PERIOD (BT-134 / BT-135).",
+                "$ref": "#/components/schemas/InvoicingPeriodDto"
+              }
+            ]
+          },
+          "priceBaseQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "description": "BT-149, the quantity the net unit price applies to.",
+            "format": "double"
+          },
+          "priceBaseQuantityUnitCode": {
+            "type": "string",
+            "description": "BT-150, the unit of measure of BT-149."
+          },
+          "priceDiscount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "description": "BT-147, the discount subtracted from BT-148 to arrive at BT-146.",
+            "format": "double"
+          },
+          "subLines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineDto"
+            },
+            "description": "BG-DEX-01 SUB INVOICE LINE, an XRechnung Extension term. A sub line carries the same terms\nas the line it hangs under, including its own sub lines, and its BT-131 is already part of\nthe parent's — so the group breaks a line down rather than adding to the invoice."
+          }
+        }
+      },
+      "InvoiceNoteDto": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "subjectCode": {
+            "type": "string"
+          }
+        },
+        "description": "BG-1 INVOICE NOTE: the note text BT-22 and, optionally, the BT-21 subject code saying what the\nnote is about. `SubjectCode` defaults to null, so a caller with plain notes states only the\ntext."
+      },
+      "InvoiceRepresentationDto": {
+        "required": [
+          "format",
+          "version",
+          "profile",
+          "syntax"
+        ],
+        "type": "object",
+        "properties": {
+          "format": {
+            "$ref": "#/components/schemas/ApiInvoiceFormat"
+          },
+          "version": {
+            "type": "string"
+          },
+          "profile": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiInvoiceProfile"
+              }
+            ]
+          },
+          "syntax": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ApiInvoiceSyntax"
+              }
+            ]
+          }
+        }
+      },
+      "InvoicingPeriodDto": {
+        "required": [
+          "startDate",
+          "endDate"
+        ],
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "description": "A date range: BG-14 INVOICING PERIOD (BT-73 / BT-74) on the header and BG-26 INVOICE LINE PERIOD\n(BT-134 / BT-135) on a line. Both ends are optional because EN 16931 requires only one of them."
+      },
+      "ItemAttributeDto": {
+        "required": [
+          "name",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "ItemDto": {
+        "required": [
+          "name",
+          "description",
+          "sellerItemId",
+          "buyerItemId",
+          "standardItemId",
+          "standardItemSchemeId",
+          "classifications",
+          "vatCategory",
+          "attributes"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sellerItemId": {
+            "type": "string"
+          },
+          "buyerItemId": {
+            "type": "string"
+          },
+          "standardItemId": {
+            "type": "string"
+          },
+          "standardItemSchemeId": {
+            "type": "string"
+          },
+          "classifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QualifiedIdentifierDto"
+            }
+          },
+          "vatCategory": {
+            "$ref": "#/components/schemas/VatCategoryDto"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemAttributeDto"
+            }
+          },
+          "countryOfOrigin": {
+            "type": "string",
+            "description": "BT-159, the country the item originates from."
+          }
+        }
+      },
+      "MonetaryTotalsDto": {
+        "required": [
+          "lineNetAmount",
+          "allowanceTotalAmount",
+          "chargeTotalAmount",
+          "taxExclusiveAmount",
+          "taxTotalAmount",
+          "taxInclusiveAmount",
+          "prepaidAmount",
+          "roundingAmount",
+          "payableAmount"
+        ],
+        "type": "object",
+        "properties": {
+          "lineNetAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "allowanceTotalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "chargeTotalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "taxExclusiveAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "taxTotalAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "taxInclusiveAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "prepaidAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "roundingAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "payableAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "taxTotalAccountingCurrencyAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          }
+        }
+      },
+      "OperationCapabilityDto": {
+        "required": [
+          "operation",
+          "profiles"
+        ],
+        "type": "object",
+        "properties": {
+          "operation": {
+            "$ref": "#/components/schemas/ApiInvoiceOperation"
+          },
+          "profiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiInvoiceProfile"
+            }
+          }
+        },
+        "description": "The profiles one operation supports, which is not always the profile list of the standard:\nZUGFeRD MINIMUM and BASIC WL validate and render but cannot be read or generated, because\nneither schema declares an invoice line."
+      },
+      "OperationWarningDto": {
+        "required": [
+          "code",
+          "message",
+          "businessPath"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "businessPath": {
+            "type": "string"
+          }
+        }
+      },
+      "PartyDto": {
+        "required": [
+          "name",
+          "tradingName",
+          "identifiers",
+          "registrationName",
+          "taxRegistrationId",
+          "vatIdentifier",
+          "legalRegistrationIdentifier",
+          "electronicAddress",
+          "address",
+          "contact"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tradingName": {
+            "type": "string"
+          },
+          "identifiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QualifiedIdentifierDto"
+            }
+          },
+          "registrationName": {
+            "type": "string"
+          },
+          "taxRegistrationId": {
+            "type": "string"
+          },
+          "vatIdentifier": {
+            "type": "string"
+          },
+          "legalRegistrationIdentifier": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QualifiedIdentifierDto"
+              }
+            ]
+          },
+          "electronicAddress": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ElectronicAddressDto"
+              }
+            ]
+          },
+          "address": {
+            "$ref": "#/components/schemas/PostalAddressDto"
+          },
+          "contact": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ContactDto"
+              }
+            ]
+          },
+          "additionalLegalInformation": {
+            "type": "string",
+            "description": "BT-33, additional legal information about the seller."
+          }
+        }
+      },
+      "PayeeDto": {
+        "required": [
+          "name",
+          "identifier",
+          "legalRegistrationIdentifier"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "identifier": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QualifiedIdentifierDto"
+              }
+            ]
+          },
+          "legalRegistrationIdentifier": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QualifiedIdentifierDto"
+              }
+            ]
+          }
+        },
+        "description": "BG-10 PAYEE: the party to be paid when that is not the seller. `Name` is BT-59,\n`Identifier` is BT-60/BT-60-1 and `LegalRegistrationIdentifier` is BT-61/BT-61-1."
+      },
+      "PaymentInstructionsDto": {
+        "required": [
+          "meansCode",
+          "meansText",
+          "remittanceInformation",
+          "creditTransfers",
+          "mandateReference",
+          "paymentCardPrimaryAccountNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "meansCode": {
+            "type": "string"
+          },
+          "meansText": {
+            "type": "string"
+          },
+          "remittanceInformation": {
+            "type": "string"
+          },
+          "creditTransfers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreditTransferDto"
+            }
+          },
+          "mandateReference": {
+            "type": "string"
+          },
+          "paymentCardPrimaryAccountNumber": {
+            "type": "string"
+          },
+          "bankAssignedCreditorIdentifier": {
+            "type": "string"
+          },
+          "debitedAccountIdentifier": {
+            "type": "string"
+          },
+          "paymentCardNetworkIdentifier": {
+            "type": "string"
+          },
+          "paymentCardHolderName": {
+            "type": "string"
+          }
+        }
+      },
+      "PostalAddressDto": {
+        "required": [
+          "line1",
+          "line2",
+          "line3",
+          "city",
+          "postCode",
+          "countrySubdivision",
+          "countryCode"
+        ],
+        "type": "object",
+        "properties": {
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": "string"
+          },
+          "line3": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "postCode": {
+            "type": "string"
+          },
+          "countrySubdivision": {
+            "type": "string"
+          },
+          "countryCode": {
+            "type": "string"
+          }
+        }
+      },
+      "PrecedingInvoiceReferenceDto": {
+        "required": [
+          "invoiceId",
+          "issueDate"
+        ],
+        "type": "object",
+        "properties": {
+          "invoiceId": {
+            "type": "string"
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "description": "BG-3 PRECEDING INVOICE REFERENCE. `InvoiceId` is BT-25, `IssueDate` is BT-26."
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": "string",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          }
+        }
+      },
+      "QualifiedIdentifierDto": {
+        "required": [
+          "value",
+          "schemeIdentifier"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "schemeIdentifier": {
+            "type": "string"
+          },
+          "schemeVersionIdentifier": {
+            "type": "string",
+            "description": "The version of the scheme, BT-158-2 being the only term EN 16931 names for it. It is optional\non every identifier because the normative binding treats it that way."
+          }
+        },
+        "description": "An identifier together with the scheme it is drawn from."
+      },
+      "ReadInvoiceRequestDto": {
+        "required": [
+          "document"
+        ],
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/DocumentInputDto"
+          }
+        }
+      },
+      "ReadInvoiceResponseDto": {
+        "required": [
+          "invoice",
+          "detectedRepresentation",
+          "validation"
+        ],
+        "type": "object",
+        "properties": {
+          "invoice": {
+            "$ref": "#/components/schemas/InvoiceDto"
+          },
+          "detectedRepresentation": {
+            "$ref": "#/components/schemas/InvoiceRepresentationDto"
+          },
+          "validation": {
+            "$ref": "#/components/schemas/ValidateInvoiceResponseDto"
+          }
+        }
+      },
+      "RenderInvoiceRequestDto": {
+        "required": [
+          "document",
+          "invoice",
+          "outputFormat"
+        ],
+        "type": "object",
+        "properties": {
+          "document": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DocumentInputDto"
+              }
+            ]
+          },
+          "invoice": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InvoiceDto"
+              }
+            ]
+          },
+          "outputFormat": {
+            "$ref": "#/components/schemas/ApiRenderOutputFormat"
+          }
+        }
+      },
+      "RenderInvoiceResponseDto": {
+        "required": [
+          "content",
+          "contentType",
+          "fileName",
+          "isVisualizationOnly",
+          "warnings"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "format": "byte"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "isVisualizationOnly": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperationWarningDto"
+            }
+          }
+        }
+      },
+      "StandardCapabilityDto": {
+        "required": [
+          "format",
+          "version",
+          "compatibleStandardVersion",
+          "profiles",
+          "syntaxes",
+          "invoiceTypeCodes",
+          "operations",
+          "operationProfiles",
+          "inputTypes",
+          "outputTypes",
+          "components"
+        ],
+        "type": "object",
+        "properties": {
+          "format": {
+            "$ref": "#/components/schemas/ApiInvoiceFormat"
+          },
+          "version": {
+            "type": "string"
+          },
+          "compatibleStandardVersion": {
+            "type": "string"
+          },
+          "profiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiInvoiceProfile"
+            }
+          },
+          "syntaxes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiInvoiceSyntax"
+            }
+          },
+          "invoiceTypeCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiInvoiceOperation"
+            }
+          },
+          "operationProfiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperationCapabilityDto"
+            }
+          },
+          "inputTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiInvoiceInputType"
+            }
+          },
+          "outputTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiInvoiceOutputType"
+            }
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StandardComponentDto"
+            }
+          }
+        }
+      },
+      "StandardComponentDto": {
+        "required": [
+          "name",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "SupportingDocumentDto": {
+        "required": [
+          "id",
+          "description",
+          "mimeType",
+          "fileName",
+          "externalLocation",
+          "content"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "externalLocation": {
+            "type": "string",
+            "format": "uri"
+          },
+          "content": {
+            "type": "string",
+            "format": "byte"
+          }
+        }
+      },
+      "ThirdPartyPaymentDto": {
+        "required": [
+          "type",
+          "amount",
+          "instruction"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "instruction": {
+            "type": "string"
+          }
+        }
+      },
+      "ValidateInvoiceRequestDto": {
+        "required": [
+          "document"
+        ],
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/DocumentInputDto"
+          }
+        }
+      },
+      "ValidateInvoiceResponseDto": {
+        "required": [
+          "valid",
+          "detectedRepresentation",
+          "issues"
+        ],
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "detectedRepresentation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InvoiceRepresentationDto"
+              }
+            ]
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssueDto"
+            }
+          }
+        }
+      },
+      "ValidationIssueDto": {
+        "required": [
+          "code",
+          "severity",
+          "message",
+          "ruleId",
+          "businessPath"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/ApiValidationSeverity"
+          },
+          "message": {
+            "type": "string"
+          },
+          "ruleId": {
+            "type": "string"
+          },
+          "businessPath": {
+            "type": "string"
+          }
+        }
+      },
+      "VatBreakdownDto": {
+        "required": [
+          "category",
+          "taxableAmount",
+          "taxAmount",
+          "exemptionReason",
+          "exemptionReasonCode"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/VatCategoryDto"
+          },
+          "taxableAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "taxAmount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          },
+          "exemptionReason": {
+            "type": "string"
+          },
+          "exemptionReasonCode": {
+            "type": "string"
+          }
+        }
+      },
+      "VatCategoryDto": {
+        "required": [
+          "code",
+          "rate"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "rate": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": "string",
+            "format": "double"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "MarketplaceApiKey": {
+        "type": "apiKey",
+        "description": "Google Cloud Marketplace API key (imp_...). Create it in the customer portal after signing up through Google Cloud Marketplace.",
+        "name": "X-API-Key",
+        "in": "header"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Capabilities"
+    },
+    {
+      "name": "InvoiceConversion"
+    },
+    {
+      "name": "InvoiceGeneration"
+    },
+    {
+      "name": "InvoiceRead"
+    },
+    {
+      "name": "InvoiceRendering"
+    },
+    {
+      "name": "InvoiceValidation"
+    }
+  ]
+}
