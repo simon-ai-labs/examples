@@ -10,6 +10,7 @@ Service URL: [https://invoice-service-api.simon-ai-enterprise.de](https://invoic
   - `InvoiceBusinessCases` walks through every business case of the service (see below), once over each transport.
   - `InvoiceRestService` reads `/docs`, follows it to the OpenAPI description, looks up each operation there and builds the request body from its schema.
   - `InvoiceMcpService` connects to `/mcp` over Streamable HTTP, lists the tools and builds each call's arguments from the tool's input schema.
+- **[vibe-coding.md](vibe-coding.md)**: a guide for building your own tool on this API with an AI coding assistant. Give it to the assistant and it takes you from the first idea through setup, the business cases, error handling, tests and security to a shippable tool.
 
 ### Business cases in the walkthrough
 
@@ -67,7 +68,7 @@ For a Marketplace deployment:
 dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- rest https://invoice-service-api.simon-ai-enterprise.de <YOUR_API_KEY>
 ```
 
-The REST walkthrough sends an `Idempotency-Key` with each document operation. The API key can also be provided with the `INVOICE_API_KEY` environment variable or .NET User Secrets. The base URL can be set with `INVOICE_API_BASE_URL`.
+The API key can also be provided with the `INVOICE_API_KEY` environment variable or .NET User Secrets. The base URL can be set with `INVOICE_API_BASE_URL`.
 
 ### Run the MCP walkthrough
 
@@ -91,7 +92,7 @@ export INVOICE_API_KEY="your-api-key"
 dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- mcp
 ```
 
-Each MCP tool call sends its own `Idempotency-Key`. Both walkthroughs run all
+The MCP walkthrough uses one session for all tool calls. Both walkthroughs run all
 business cases. `generate_invoice` uses the invoice read from the KoSIT sample
 unless `INVOICE_CANONICAL_JSON_PATH` points to your own JSON file containing an `InvoiceDto`:
 
