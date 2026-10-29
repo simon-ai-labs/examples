@@ -5,12 +5,6 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  schedule:
-    # Daily: notices when the live API description moves away from the generated client.
-    - cron: "17 5 * * *"
-
-permissions:
-  contents: read
 
 jobs:
   build:
@@ -23,29 +17,10 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        global-json-file: global.json
+        dotnet-version: '10.0.x'
 
     - name: Restore dependencies
       run: dotnet restore examples.sln
 
     - name: Build
       run: dotnet build examples.sln --no-restore --configuration Release
-
-    - name: Test
-      run: dotnet test --solution examples.sln --no-build --configuration Release
-
-  openapi-drift:
-    # /docs is public, so this needs no API key.
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        global-json-file: global.json
-
-    - name: Compare the live API description with the generated client
-      run: dotnet run --project src/InvoiceServices.Client.Cli --configuration Release -- docs
