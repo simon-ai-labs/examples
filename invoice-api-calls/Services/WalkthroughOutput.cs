@@ -6,7 +6,6 @@ namespace InvoiceServices.Samples.Services;
 /// <summary>Console output and result files shared by the REST and MCP walkthroughs.</summary>
 public static class WalkthroughOutput
 {
-    private const int MaxStringLength = 120;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     public static string OutputDirectory { get; } = Path.Combine(Directory.GetCurrentDirectory(), "output");
@@ -25,9 +24,6 @@ public static class WalkthroughOutput
         Console.ResetColor();
     }
 
-    /// <summary>Prints a result with long strings such as Base64 documents shortened.</summary>
-    public static void Json(JsonNode? node) => Console.WriteLine(Shorten(node)?.ToJsonString(JsonOptions) ?? "null");
-
     /// <summary>Writes a Base64 document from a result to <see cref="OutputDirectory"/>.</summary>
     public static async Task SaveAsync(string transport, string fileName, string? base64Content)
     {
@@ -43,13 +39,12 @@ public static class WalkthroughOutput
         Console.WriteLine($"✔ Saved {path} ({bytes.Length:N0} bytes)");
     }
 
-    private static JsonNode? Shorten(JsonNode? node) => node switch
+    /// <summary>Writes a JSON result, such as the canonical invoice, to <see cref="OutputDirectory"/>.</summary>
+    public static async Task SaveJsonAsync(string transport, string fileName, JsonNode node)
     {
-        JsonObject obj => new JsonObject(obj.Select(property =>
-            KeyValuePair.Create(property.Key, Shorten(property.Value)))),
-        JsonArray array => new JsonArray([.. array.Select(Shorten)]),
-        JsonValue value when value.TryGetValue<string>(out var text) && text.Length > MaxStringLength =>
-            JsonValue.Create($"{text[..MaxStringLength]}… ({text.Length:N0} chars)"),
-        _ => node?.DeepClone()
-    };
+        var directory = Directory.CreateDirectory(Path.Combine(OutputDirectory, transport));
+        var path = Path.Combine(directory.FullName, fileName);
+        await File.WriteAllTextAsync(path, node.ToJsonString(JsonOptions));
+        Console.WriteLine($"✔ Saved {path}");
+    }
 }
