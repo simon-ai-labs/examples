@@ -6,17 +6,10 @@ Service URL: [https://invoice-service-api.simon-ai-enterprise.de](https://invoic
 
 ## Projects
 
-- **[invoice-api-calls](invoice-api-calls/)**: .NET console walkthrough for the REST API and MCP interface.
-  - REST mode demonstrates capabilities, invoice validation, reading, conversion and rendering.
-  - MCP mode connects to the service over Streamable HTTP, lists available tools and invokes the invoice operations.
+- **[invoice-api-calls](invoice-api-calls/)**: .NET console walkthrough for the REST API and MCP interface. It has no request or response classes: requests are built at runtime from the service's own JSON definitions.
+  - `InvoiceRestService` reads `/docs`, follows it to the OpenAPI description, looks up each operation there and builds the request body from its schema. It demonstrates capabilities, validation, reading, conversion and rendering.
+  - `InvoiceMcpService` connects to `/mcp` over Streamable HTTP, lists the tools and builds each call's arguments from the tool's input schema.
   - Optional canonical invoice JSON demonstrates the `generate_invoice` tool.
-- **[InvoiceServices.Client](src/InvoiceServices.Client/)**: reusable .NET 10 client library.
-  - REST: a typed [Kiota](https://learn.microsoft.com/openapi/kiota/) client generated from the OpenAPI description that `/docs` renders.
-  - Docs reader: reads `/docs`, finds and parses the OpenAPI description, and reports drift against the generated client.
-  - MCP: a client for `/mcp` on the official [ModelContextProtocol](https://github.com/modelcontextprotocol/csharp-sdk) SDK. It uses the same request and response models as REST and exposes the tools as Microsoft.Extensions.AI functions.
-  - Both transports implement `IInvoiceOperations` and are registered as keyed services (`"rest"`, `"mcp"`).
-- **[invoice-client](src/InvoiceServices.Client.Cli/)**: command line on top of the library (`docs`, `rest`, `mcp`, `mcp tools`, `smoke`).
-- **[InvoiceServices.Client.Tests](tests/InvoiceServices.Client.Tests/)**: xUnit v3 tests. MCP is tested against a real in-memory MCP server.
 
 The bundled `01.06_minimal_test_ubl.xml` is an unmodified positive reference
 invoice from the official [KoSIT XRechnung Test Suite](https://github.com/itplr-kosit/xrechnung-testsuite).
@@ -38,6 +31,14 @@ The walkthrough also validates an in-memory negative variant without BuyerRefere
 ```bash
 dotnet build examples.sln
 ```
+
+### Run both walkthroughs
+
+```bash
+dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- https://invoice-service-api.simon-ai-enterprise.de <YOUR_API_KEY>
+```
+
+Without `rest` or `mcp` as the first argument, the REST walkthrough runs first and the MCP walkthrough after it. Converted and rendered documents are written to `output/rest` and `output/mcp`.
 
 ### Run the REST walkthrough
 
@@ -93,47 +94,3 @@ the service's `/openapi/v1.json` and `/v1/capabilities` endpoints.
 
 Sample code notice: These examples are intentionally minimal and intended to demonstrate API integration. Production applications should add appropriate error handling, secret management, retries, logging and monitoring.
 
-## Typed REST and MCP client (`InvoiceServices.Client`)
-
-### Use it in your application
-
-```csharp
-builder.Services.AddInvoiceServicesClient(builder.Configuration);
-
-// Pick a transport, or inject InvoiceApiClient / IInvoiceMcpClient directly.
-var invoices = app.Services.GetRequiredKeyedService<IInvoiceOperations>(InvoiceTransports.Mcp);
-var result = await invoices.ValidateAsync(new() { Document = new() { Content = xmlBytes, FileName = "invoice.xml" } });
-```
-
-Configuration section `InvoiceServices`:
-
-| Key | Default | Notes |
-|---|---|---|
-| `BaseAddress` | `https://invoice-service-api.simon-ai-enterprise.de` | HTTPS required except for localhost |
-| `ApiKey` | empty | Marketplace key `imp_…`. Use user secrets or `InvoiceServices__ApiKey`, never source control or the command line |
-| `AttemptTimeout` | `00:01:30` | One HTTP attempt; PDF rendering under load can take tens of seconds |
-| `TotalTimeout` | `00:04:00` | One call including retries |
-
-Every HTTP client (REST, MCP, docs) goes through `IHttpClientFactory` with the standard resilience pipeline: retries on 408, 429 and 5xx with `Retry-After`, timeouts and a circuit breaker. The service stores no documents and every operation is a pure function of its input, so retrying a POST is safe. The API key is added by a delegating handler and never sent to `/docs`.
-
-### Command line
-
-```bash
-dotnet user-secrets set InvoiceServices:ApiKey <YOUR_API_KEY> --project src/InvoiceServices.Client.Cli
-dotnet run --project src/InvoiceServices.Client.Cli -- docs        # public, no key needed
-dotnet run --project src/InvoiceServices.Client.Cli -- rest
-dotnet run --project src/InvoiceServices.Client.Cli -- mcp tools
-dotnet run --project src/InvoiceServices.Client.Cli -- smoke       # docs drift + REST and MCP give identical results
-```
-
-### When the API changes
-
-`invoice-client docs`, and the daily `openapi-drift` CI job, compare the live description with the snapshot the client was generated from. To regenerate:
-
-```bash
-pwsh Build/generate-openapi-client.ps1
-```
-
-### Known issue in the API description
-
-Decimal amounts such as `payableAmount` or `quantity` are described as `type: string` with a number pattern, while the service sends JSON numbers. Generated clients therefore type these fields as `string`, and Kiota reads the numbers as `null`. The fix belongs in the service's OpenAPI generation (`type: number`, or `["number", "string"]`). After that, regenerating the client is enough.
