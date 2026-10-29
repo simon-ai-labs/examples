@@ -42,7 +42,10 @@ working, maintainable software, not just to code that runs once.
    of guessing field names, enum spellings or versions.
 8. **Explain errors in plain words.** When something fails, show what the service answered, explain
    what it means and propose the fix.
-9. **Keep it simple.** No extra frameworks, layers or abstractions unless the user's goal needs them.
+9. **Automate the checks.** Tests, coverage, SAST, SCA and (for web tools) DAST run in a CI pipeline
+   on every change, not only on the user's machine. A failing gate blocks the change; never lower a
+   threshold or switch off a check to get a green build.
+10. **Keep it simple.** No extra frameworks, layers or abstractions unless the user's goal needs them.
    A small tool that works and is tested beats a big one that does not.
 
 ---
@@ -265,56 +268,144 @@ invoice, and anything not done is moved to the "later" list.
 
 ---
 
-### Stage 6 — Tests
+### Stage 6 — Test automation and code coverage
 
-**Goal:** changes later do not silently break what works now.
+**Goal:** every change is checked automatically, and you know how much of the code the tests reach.
 
-1. **Unit tests** for your own logic (mapping, file handling, error messages) with the HTTP calls
-   replaced by fakes that return answers recorded from the real service.
-2. **A few live tests** that call the real service with the test invoice, run only when
-   `INVOICE_API_KEY` is set and clearly reported as skipped otherwise — never silently passed.
-3. Run all tests with one command.
+**Test layers.** Build them in this order:
+
+| Layer | What it checks | How |
+|---|---|---|
+| Unit tests | Your own logic: mapping, file handling, error messages, retries | HTTP calls replaced by fakes that return answers recorded from the real service (including 401, 422, 429, 503) |
+| Contract test | The API has not changed under you | Compare the live `/openapi/v1.json` with the copy saved in Stage 2; fail with a list of added or removed operations and fields |
+| Live tests | The real service still does what you rely on | The test invoice through each business case you use. Run only when `INVOICE_API_KEY` is set and report "skipped" otherwise — never pass silently |
+| End-to-end tests | The tool as a user sees it | Run the CLI on a sample folder, or drive the web UI with a browser tool (e.g. Playwright) |
+
+**Code coverage** measures which lines and branches the tests executed.
+
+| Ecosystem | Coverage tool |
+|---|---|
+| .NET | `dotnet test --collect:"XPlat Code Coverage"` (coverlet) + ReportGenerator for the HTML report |
+| Python | `pytest --cov --cov-branch` (coverage.py) |
+| JavaScript / TypeScript | `vitest --coverage` or `jest --coverage` |
+| Java / Kotlin | JaCoCo |
+
+- Measure **line and branch** coverage, not only lines: untested `if`/`else` branches are where error
+  handling hides.
+- Start with a gate of **80 % lines and branches** for the whole project and **100 % for your own
+  business logic and error handling**. Raise the gate over time; never lower it to make a build pass.
+- Exclude only generated code, and write down why next to the exclusion.
+- High coverage is not proof of good tests. Keep the "break it on purpose" check below. For important
+  logic, a mutation testing tool (Stryker for .NET and JS, mutmut for Python, PIT for Java) finds
+  tests that run code without checking anything.
 
 **Prompt to paste:**
 
-> Add tests: unit tests for our own logic with faked HTTP answers recorded from the real service,
-> and live tests against the real service that run only when INVOICE_API_KEY is set and report
-> "skipped" otherwise. Give me one command to run everything.
+> Set up test automation as in vibe-coding.md Stage 6: unit tests with faked HTTP answers recorded
+> from the real service, a contract test against the saved openapi.json, live tests that run only
+> when INVOICE_API_KEY is set and report "skipped" otherwise, and line + branch coverage with a
+> gate of 80 % overall and 100 % for our business logic and error handling. One command runs it all
+> and prints the coverage report.
 
-**Done when:** the test command passes, and breaking something on purpose (e.g. a wrong field name)
-makes a test fail.
+**Done when:**
+
+- [ ] One command runs all tests and prints line and branch coverage.
+- [ ] The coverage gate fails the run when coverage drops below the threshold.
+- [ ] Breaking something on purpose (a wrong field name, a removed error case) makes a test fail.
+- [ ] Without a key, live tests show as skipped; with a key, they pass.
 
 ---
 
-### Stage 7 — Security and data protection review
+### Stage 7 — Security: SAST, SCA, DAST and data protection
 
-**Goal:** the tool is safe to give to others.
+**Goal:** the tool is safe to give to others, and stays safe as code and dependencies change.
 
-The guide checks with the user:
+**SAST — static application security testing.** Scans your source code for vulnerable patterns
+(injection, unsafe deserialization, path traversal through uploaded file names, hard-coded secrets)
+without running it.
 
-- [ ] The key is not in the code, the git history, logs or error messages.
+| What | Tools |
+|---|---|
+| Multi-language rules | Semgrep, GitHub CodeQL |
+| Language analyzers | .NET: built-in analyzers with `<AnalysisLevel>latest-recommended</AnalysisLevel>` and warnings as errors · Python: Bandit, Ruff · JS/TS: ESLint with a security plugin |
+| Secrets in code and history | gitleaks, GitHub secret scanning with push protection |
+
+**SCA — software composition analysis.** Checks your dependencies for known vulnerabilities and for
+licences you may not use.
+
+| What | Tools |
+|---|---|
+| Known vulnerabilities | `dotnet list package --vulnerable --include-transitive`, `npm audit`, `pip-audit`, OWASP Dependency-Check, Trivy |
+| Automatic update pull requests | Dependabot, Renovate |
+| Software bill of materials (SBOM) | CycloneDX tools for your ecosystem |
+
+Pin dependency versions with lock files, fail the build on high or critical findings, and let the
+tests from Stage 6 check every update pull request.
+
+**DAST — dynamic application security testing.** Attacks the **running** tool from outside, the way
+an attacker would.
+
+- Only relevant if your tool serves HTTP itself (web app, API, webhook receiver). For a command-line
+  tool, test hostile input instead: huge files, files that are not invoices, file names with `../`.
+- Use OWASP ZAP (baseline scan on every build, full scan before a release) against **your own tool,
+  running locally or on a test environment**.
+- **Never point DAST at the E-Invoicing Service.** It is not your system; scanning it attacks someone
+  else's service and breaks its terms of use.
+- Look at what ZAP reports about security headers, cookies, error pages that leak stack traces, and
+  upload limits.
+
+**Data protection.** The guide checks with the user:
+
+- [ ] The key is not in the code, the git history, logs or error messages (gitleaks is clean).
 - [ ] Invoice content is not logged; output files go where the user expects and nowhere else.
 - [ ] Only HTTPS is used for the service.
-- [ ] Uploaded or processed files are cleaned up if the tool is a web app.
-- [ ] Dependencies are current and from official sources.
+- [ ] Uploaded or processed files are size-limited and cleaned up if the tool is a web app.
 - [ ] If others use the tool, it is clear who provides the API key and who pays for usage.
 
-**Done when:** every box is ticked or consciously accepted with a note in `GOAL.md`.
+**Prompt to paste:**
+
+> Add security checks as in vibe-coding.md Stage 7: SAST with Semgrep or CodeQL plus the language
+> analyzers, secret scanning with gitleaks, SCA with our ecosystem's audit tool failing on high or
+> critical findings, and Dependabot or Renovate. If our tool serves HTTP, add an OWASP ZAP baseline
+> scan against our locally running tool, never against the E-Invoicing Service. Run everything
+> once, show me the findings and fix or explain each one.
+
+**Done when:**
+
+- [ ] SAST, secret scanning and SCA run with one command or in CI and report no open high or
+      critical findings; accepted findings are documented with a reason.
+- [ ] DAST ran against the tool (if it serves HTTP), or hostile-input tests exist (if it does not).
+- [ ] Every data protection box is ticked or consciously accepted with a note in `GOAL.md`.
 
 ---
 
 ### Stage 8 — Ship it
 
-**Goal:** someone else can install and use the tool without you.
+**Goal:** someone else can install and use the tool, and every change is checked automatically.
 
 1. A `README.md` with: what it does, how to install, how to set the key, one example run, known
    limitations.
 2. One command to build or start it.
-3. If it uses git and a hosting service, a CI build that runs the unit tests.
-4. A fresh-machine test: follow the README from scratch, ideally on another computer or with another
+3. A **CI pipeline** (GitHub Actions, GitLab CI, Azure Pipelines, …) that runs on every push and pull
+   request and fails when any gate fails:
+
+   | Step | From |
+   |---|---|
+   | Build with warnings as errors | Stage 1 |
+   | Unit and contract tests | Stage 6 |
+   | Coverage gate (lines and branches) | Stage 6 |
+   | SAST and secret scanning | Stage 7 |
+   | SCA, failing on high or critical | Stage 7 |
+   | DAST baseline scan (if the tool serves HTTP) | Stage 7 |
+
+   Run the live tests on a schedule (e.g. daily) and before releases, with the API key stored as a CI
+   secret, never in the pipeline file.
+4. Protect the main branch: changes only through pull requests with a green pipeline.
+5. A fresh-machine test: follow the README from scratch, ideally on another computer or with another
    person.
 
-**Done when:** a second person got it running from the README alone.
+**Done when:** the pipeline is green on the main branch, a pull request that breaks a test or adds a
+vulnerable dependency is blocked, and a second person got the tool running from the README alone.
 
 ---
 
@@ -327,7 +418,9 @@ Before calling version 1 finished, all of these should be true:
 - [ ] Errors produce short, understandable messages; retries handle 429, 503 and timeouts.
 - [ ] Versions come from `/v1/capabilities`, field names from the OpenAPI description.
 - [ ] No secrets or invoice content in code, history or logs.
-- [ ] Tests run with one command and fail when something breaks.
+- [ ] Unit, contract and live tests run automatically; line and branch coverage meet the gate.
+- [ ] SAST, secret scanning and SCA show no open high or critical findings; DAST ran if the tool serves HTTP.
+- [ ] The CI pipeline runs every gate and blocks changes that fail one.
 - [ ] The README lets someone else install and run it.
 - [ ] The code is small enough that the user can explain what each part does.
 
@@ -344,4 +437,7 @@ Before calling version 1 finished, all of these should be true:
 | Amounts are `null` after reading | Generated client trusts `type: string` for decimals | Read amounts as numbers or strings |
 | Timeout when rendering PDF | Default HTTP timeout too short | Raise it to 90 seconds or more |
 | Generated and converted files overwrite each other | The service returns the same file name | Prefix or separate output folders |
+| Coverage gate fails after adding a feature | The new code has no tests, often in its error branches | Add tests for the new branches; do not lower the gate |
+| SCA reports a vulnerable package you do not use directly | A transitive dependency | Update the direct dependency that pulls it in, or pin a fixed version |
+| ZAP reports missing security headers | The web framework's defaults | Add the headers in one central middleware or server config |
 | The assistant keeps guessing field names | It has not read the description | Tell it: "look it up in /openapi/v1.json first" |
