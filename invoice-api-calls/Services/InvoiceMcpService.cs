@@ -13,6 +13,7 @@ public sealed class InvoiceMcpService(Uri endpoint, string? apiKey, string invoi
     : IInvoiceTransport
 {
     private Dictionary<string, Tool> _tools = [];
+    private McpClient? _client;
 
     public string Name => "mcp";
 
@@ -20,10 +21,10 @@ public sealed class InvoiceMcpService(Uri endpoint, string? apiKey, string invoi
     {
         Write(ConsoleColor.White, "\n==================== MCP walkthrough =====================");
         Step($"Listing the tools of {endpoint}");
-        await using (var client = await ConnectAsync())
-        {
-            _tools = (await client.ListToolsAsync()).ToDictionary(tool => tool.Name, tool => tool.ProtocolTool);
-        }
+        // One MCP session serves every business case.
+        await using var client = await ConnectAsync();
+        _client = client;
+        _tools = (await client.ListToolsAsync()).ToDictionary(tool => tool.Name, tool => tool.ProtocolTool);
 
         foreach (var tool in _tools.Values)
         {
@@ -46,9 +47,7 @@ public sealed class InvoiceMcpService(Uri endpoint, string? apiKey, string invoi
             .Build(schema, values.ToDictionary(value => $"request.{value.Key}", value => value.Value))
             .ToDictionary(argument => argument.Key, argument => (object?)argument.Value);
 
-        // The Marketplace quota layer requires a fresh Idempotency-Key for each document tool call.
-        await using var client = await ConnectAsync();
-        var result = await client.CallToolAsync(tool.Name, arguments);
+        var result = await _client!.CallToolAsync(tool.Name, arguments);
         var text = result.Content.OfType<TextContentBlock>().FirstOrDefault()?.Text;
         if (result.IsError == true)
         {
@@ -62,7 +61,7 @@ public sealed class InvoiceMcpService(Uri endpoint, string? apiKey, string invoi
 
     private Task<McpClient> ConnectAsync()
     {
-        var headers = new Dictionary<string, string> { ["Idempotency-Key"] = Guid.NewGuid().ToString("N") };
+        var headers = new Dictionary<string, string>();
         if (!string.IsNullOrWhiteSpace(apiKey))
         {
             headers["X-API-Key"] = apiKey;

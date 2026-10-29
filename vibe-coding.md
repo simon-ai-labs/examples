@@ -57,7 +57,6 @@ working, maintainable software, not just to code that runs once.
 | MCP endpoint | `/mcp` (Streamable HTTP) — the same operations as tools for AI agents |
 | API key | `imp_` + 64 hex characters, created in the [customer portal](https://invoice-service-api.simon-ai-enterprise.de/portal) after subscribing through Google Cloud Marketplace |
 | Auth header | `X-API-Key: <key>` on every API call (not needed for `/docs` and `/openapi/v1.json`) |
-| Per-request header | `Idempotency-Key: <new GUID>` on every document operation (all `POST`s) |
 
 ### Business cases
 
@@ -205,7 +204,7 @@ before going on.
 
 **Goal:** the most important feature from Stage 0 works with the official test invoice.
 
-1. Load a file, Base64-encode it, build the request from Part 2, send it with a new `Idempotency-Key`.
+1. Load a file, Base64-encode it, build the request from Part 2 and send it.
 2. Turn the answer into something the user understands: "valid" or a list of problems with rule and
    path, the saved converted file, the extracted invoice data.
 3. Test it with the good test invoice **and** with a broken one (test invoice without

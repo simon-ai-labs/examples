@@ -47,8 +47,6 @@ public sealed partial class InvoiceRestService(HttpClient http, string? apiKey, 
         if (definition["requestBody"]?["content"]?["application/json"]?["schema"] is { } schema)
         {
             request.Content = JsonContent.Create(_builder.Build(schema, values));
-            // The Marketplace quota layer counts each document operation by its Idempotency-Key.
-            request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("N"));
         }
 
         using var response = await http.SendAsync(request);
