@@ -130,7 +130,7 @@ public sealed class InvoiceBusinessCases(IInvoiceTransport transport, string inv
             var document = generated?["document"];
             PrintWarnings(generated);
             var generatedName = document?["fileName"]?.ToString() ?? $"generated_{target["format"]}.xml";
-            await SaveAsync(transport.Name, generatedName, document?["content"]?.ToString());
+            await SaveAsync(transport.Name, $"generated-{generatedName}", document?["content"]?.ToString());
 
             // A ZUGFeRD hybrid PDF is also checked for PDF/A-3b by validate.
             Console.WriteLine($"Validating the generated {document?["contentType"]} document:");
@@ -160,7 +160,7 @@ public sealed class InvoiceBusinessCases(IInvoiceTransport transport, string inv
             var converted = await transport.CallAsync("convert", values);
             PrintWarnings(converted);
             var document = converted?["document"] ?? throw new InvalidOperationException("The convert result contains no document.");
-            await SaveAsync(transport.Name, document["fileName"]?.ToString() ?? $"converted_{target["format"]}.xml", document["content"]?.ToString());
+            await SaveAsync(transport.Name, $"converted-{document["fileName"]?.ToString() ?? $"{target["format"]}.xml"}", document["content"]?.ToString());
             cii ??= document;
         }
 
@@ -180,7 +180,7 @@ public sealed class InvoiceBusinessCases(IInvoiceTransport transport, string inv
                 ["document.contentType"] = "application/xml",
                 ["outputFormat"] = outputFormat
             });
-            await SaveAsync(transport.Name, rendered?["fileName"]?.ToString() ?? $"rendered_invoice.{outputFormat}", rendered?["content"]?.ToString());
+            await SaveAsync(transport.Name, $"rendered-{rendered?["fileName"]?.ToString() ?? $"invoice.{outputFormat}"}", rendered?["content"]?.ToString());
         }
     }
 
