@@ -10,6 +10,7 @@ Service URL: [https://invoice-service-api.simon-ai-enterprise.de](https://invoic
   - `InvoiceBusinessCases` walks through every business case of the service (see below), once over each transport.
   - `InvoiceRestService` reads `/docs`, follows it to the OpenAPI description, looks up each operation there and builds the request body from its schema.
   - `InvoiceMcpService` connects to `/mcp` over Streamable HTTP, lists the tools and builds each call's arguments from the tool's input schema.
+- **[vibe-coding.md](vibe-coding.md)**: a guide for building your own tool on this API with an AI coding assistant. Give it to the assistant and it takes you from the first idea through setup, the business cases, error handling, tests and security to a shippable tool.
 
 ### Business cases in the walkthrough
 
