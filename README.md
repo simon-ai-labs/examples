@@ -1,8 +1,10 @@
-# E-Invoicing Service Examples
+# Simon AI Service Examples
 
-Sample code for the E-Invoicing Service, which validates, reads, generates, converts and renders XRechnung, ZUGFeRD, Peppol and EN 16931 electronic invoices.
+Sample code for the E-Invoicing Service, which validates, reads, generates, converts and renders XRechnung, ZUGFeRD, Peppol and EN 16931 electronic invoices, and for the Minimum Tax API, which validates, reads and generates OECD Pillar Two GloBE Information Returns (GIR) and validates and reads Country-by-Country Reports (CbCR).
 
-Service URL: [https://invoice-service-api.simon-ai-enterprise.de](https://invoice-service-api.simon-ai-enterprise.de) · [API documentation](https://invoice-service-api.simon-ai-enterprise.de/docs/)
+E-Invoicing Service: [https://invoice-service-api.simon-ai-enterprise.de](https://invoice-service-api.simon-ai-enterprise.de) · [API documentation](https://invoice-service-api.simon-ai-enterprise.de/docs/)
+
+Minimum Tax API (development): [https://minimum-tax-api-dev.simon-ai-enterprise.de](https://minimum-tax-api-dev.simon-ai-enterprise.de) · [API documentation](https://minimum-tax-api-dev.simon-ai-enterprise.de/docs/)
 
 ## Projects
 
@@ -10,6 +12,9 @@ Service URL: [https://invoice-service-api.simon-ai-enterprise.de](https://invoic
   - `InvoiceBusinessCases` walks through every business case of the service (see below), once over each transport.
   - `InvoiceRestService` reads `/docs`, follows it to the OpenAPI description, looks up each operation there and builds the request body from its schema.
   - `InvoiceMcpService` connects to `/mcp` over Streamable HTTP, lists the tools and builds each call's arguments from the tool's input schema.
+- **[minimum-api-calls](minimum-api-calls/)**: .NET console walkthrough for the Minimum Tax API over REST and MCP, built the same way as `invoice-api-calls`: requests come from the OpenAPI description behind `/docs` and from the MCP tools' input schemas, without request or response classes.
+  - `MinimumTaxBusinessCases` validates a positive, a technical (XSD) negative and a business-rule negative document per country for both GIR and CbCR, then reads and generates a GIR and reads a CbCR.
+  - `MinimumTaxRestService` and `MinimumTaxMcpService` are the two transports; the test documents and their expected results are described in [minimum-api-calls/TestDocuments/README.md](minimum-api-calls/TestDocuments/README.md).
 - **[vibe-coding.md](vibe-coding.md)**: a complete prompt for building your own tool on this API with an AI assistant. Copy the whole file into the AI chat (ChatGPT, Claude, Copilot, Cursor, …) and send it. The AI then guides you stage by stage from the first idea through setup, the business cases, error handling, test automation with code coverage, SAST, SCA and DAST to a shippable tool with a CI pipeline.
 
 ### Business cases in the walkthrough
@@ -32,6 +37,17 @@ Its pinned upstream source and license are recorded in
 The walkthrough also validates an in-memory negative variant without BuyerReference
 (BT-10) and expects the XRechnung Schematron rule `BR-DE-15` to fail.
 
+### Minimum Tax API test matrix
+
+For each of the 27 EU jurisdictions the service lists in `/v1/capabilities`:
+
+| Document | Positive | Technical negative (XSD) | Business negative (rules) |
+|---|---|---|---|
+| GIR · `POST /v1/gir/validate` · `validate_gir` | valid and complete under `<CC>-GIR-2025-08` | `SCHEMA-ERR` (`xsd` layer) | OECD rule `60020` (period end ≠ reporting period) |
+| CbCR · `POST /v1/cbcr/validate` · `validate_cbcr` | valid | `CBCR-SCHEMA-ERR` | `CBCR-SEM-002` (blank Reporting Entity name) |
+
+After the matrix the walkthrough reads the German GIR into the typed model (`gir/read` · `read_gir`), generates GIR XML from it (`gir/generate` · `generate_gir`) and validates the result, and reads the German CbCR (`cbcr/read` · `read_cbcr`). A document that does not get its expected result is printed with all its issues and makes the run exit with 1. Results go to `output/rest` and `output/mcp`, including `validation-summary.json`.
+
 ## Quick Start
 
 ### Prerequisites
@@ -53,6 +69,18 @@ dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- https://invoi
 ```
 
 Without `rest` or `mcp` as the first argument, the REST walkthrough runs first and the MCP walkthrough after it. Converted and rendered documents are written to `output/rest` and `output/mcp`.
+
+### Run the Minimum Tax walkthroughs
+
+```bash
+dotnet run --project minimum-api-calls/minimum-api-calls.csproj -- https://minimum-tax-api-dev.simon-ai-enterprise.de
+```
+
+As for the invoices, `rest` or `mcp` as the first argument runs one transport only, an API key can follow the URL, and the settings can come from `MINIMUM_TAX_API_BASE_URL` and `MINIMUM_TAX_API_KEY`:
+
+```bash
+dotnet run --project minimum-api-calls/minimum-api-calls.csproj -- mcp https://minimum-tax-api-dev.simon-ai-enterprise.de
+```
 
 ### Run the REST walkthrough
 
