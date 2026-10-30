@@ -54,7 +54,7 @@ For each of the 27 EU jurisdictions the service lists in `/v1/capabilities`, ove
 
 Before the business cases, the REST walkthrough checks the operational endpoints `GET /health` and `GET /api/status`, which have no MCP tool. That makes 386 steps per transport: 81 GIR and 81 CbCR checks, 27 GIR reads, 27 regenerations, 27 document round trips, 54 corrections, 54 status messages, 27 CbCR reads and 8 refused inputs, plus the two operational endpoints over REST. A step that does not get its expected result is printed with its issues or the service's error, the run continues with the next country and exits with 1 at the end. Results go to `output/rest` and `output/mcp`: per country the read GIR model and document, the generated GIRs, the corrections and the read CbCR model, and `summary.json` with every step.
 
-Against the dev deployment of 2026-10-30, all 305 steps passed over REST and over MCP. The document and correction cases need simon-ai-labs/minimum-tax-api#27; against that branch run locally, all 386 steps pass over both transports.
+Against the dev deployment of 2026-10-30 (simon-ai-labs/minimum-tax-api#27, commit e2c8f46), all 386 steps pass over REST and over MCP.
 
 ## Quick Start
 
