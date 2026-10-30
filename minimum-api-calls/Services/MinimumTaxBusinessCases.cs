@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -10,8 +12,8 @@ namespace MinimumTaxServices.Samples.Services;
 /// The business cases of the Minimum Tax API, run identically over REST and MCP, for every country in
 /// TestDocuments. Each country has a positive document and two negative ones for the GloBE Information Return
 /// (GIR) and for the Country-by-Country Report (CbCR): one the XML Schema rejects (technical) and one the
-/// business rules reject. Around the checks the walkthrough reads each GIR into the typed model, generates it
-/// again, reports the processing status back as a GIR status message, and reads each CbCR. The jurisdictions
+/// business rules reject. Around the checks the walkthrough reads each GIR into the typed model and into the
+/// schema-structured document, generates both again, corrects the filing against its history, reports the processing status back as a GIR status message, and reads each CbCR. The jurisdictions
 /// are taken from the capabilities at runtime.
 /// </summary>
 public sealed partial class MinimumTaxBusinessCases(IMinimumTaxTransport transport, string documentsPath)
@@ -33,6 +35,8 @@ public sealed partial class MinimumTaxBusinessCases(IMinimumTaxTransport transpo
         await QueryCapabilitiesAsync();
         await CheckGirPerCountryAsync();
         await ReadAndGenerateGirPerCountryAsync();
+        await ReadAndGenerateDocumentPerCountryAsync();
+        await CorrectFilingPerCountryAsync();
         await ReportStatusPerCountryAsync();
         await CheckCbcrPerCountryAsync();
         await ReadCbcrPerCountryAsync();
@@ -161,6 +165,307 @@ public sealed partial class MinimumTaxBusinessCases(IMinimumTaxTransport transpo
             Console.WriteLine($"  GIR  {jurisdiction}  {string.Join("  ", results)}");
         }
     }
+
+    /// <summary>
+    /// ERP import without a hand-written model: the GIR is read as <c>document</c>, the OECD payload in the schema's
+    /// own structure (every element under its schema name, every code as the schema spells it), and posted back to
+    /// generate. The result must state exactly what the original stated and still pass the national pack.
+    /// </summary>
+    private async Task ReadAndGenerateDocumentPerCountryAsync()
+    {
+        Case("Read and generate the GIR document per country", "POST /v1/gir/read · read_gir (document) → POST /v1/gir/generate · generate_gir → validate_gir");
+        foreach (var jurisdiction in Countries("gir"))
+        {
+            var results = new List<string>();
+            var bytes = await File.ReadAllBytesAsync(Path.Combine(documentsPath, "gir", jurisdiction, "positive.xml"));
+            var xml = Encoding.UTF8.GetString(bytes);
+            var (read, readError) = await transport.TryCallAsync("gir/read", GirValidation(xml, jurisdiction, bytes));
+            var document = read?["document"];
+            if (document is null)
+            {
+                Record("gir", jurisdiction, "document", "read as document", false, read?["documentNotOffered"]?.ToString() ?? "failed", Detail(readError), results);
+                Console.WriteLine($"  GIR  {jurisdiction}  {string.Join("  ", results)}");
+                continue;
+            }
+
+            await SaveJsonAsync(transport.Name, Path.Combine(jurisdiction, "gir-document.json"), document);
+            var (generated, generateError) = await transport.TryCallAsync("gir/generate", new Dictionary<string, object?>
+            {
+                ["document"] = document.DeepClone(),
+                ["nationalEnvelope"] = read?["nationalEnvelope"]?.DeepClone(),
+                ["jurisdiction"] = jurisdiction,
+                ["validateOutput"] = false
+            });
+            var generatedXml = generated?["xmlContent"]?.ToString();
+            if (generatedXml is null)
+            {
+                Record("gir", jurisdiction, "document", "generated from the document", false, "failed", Detail(generateError), results);
+                Console.WriteLine($"  GIR  {jurisdiction}  {string.Join("  ", results)}");
+                continue;
+            }
+
+            await SaveXmlAsync(transport.Name, Path.Combine(jurisdiction, "generated-from-document.xml"), generatedXml);
+            var lost = Except(Content(xml), Content(generatedXml));
+            var added = Except(Content(generatedXml), Content(xml));
+            var generatedBytes = Encoding.UTF8.GetBytes(generatedXml);
+            var (validation, validationError) = await transport.TryCallAsync("gir/validate", GirValidation(generatedXml, jurisdiction, generatedBytes));
+            var passed = lost.Count == 0 && added.Count == 0 && validationError is null && IsTrue(validation, "isValid") && IsTrue(validation, "isComplete");
+            Record("gir", jurisdiction, "document", "read → document → generate", passed,
+                lost.Count + added.Count == 0 ? Outcome(validation, Issues(validation, "ruleId"), validationError) : $"{lost.Count} lost, {added.Count} added",
+                [.. lost.Select(entry => $"    lost: {entry}"), .. added.Select(entry => $"    added: {entry}"), .. IssueLines(validation, validationError)], results);
+            Console.WriteLine($"  GIR  {jurisdiction}  {string.Join("  ", results)}");
+        }
+    }
+
+    /// <summary>
+    /// A correction of the filed return, made by editing the document as a filer would: GIR102, the FilingInfo resent
+    /// unchanged as OECD0 under its DocRefId, every other record sent again as OECD2 under a new DocRefId in the
+    /// national format and naming the record it corrects. Validated against the history the authority holds (the
+    /// first filing, accepted), no pack may find anything wrong with it. Where a pack needs records only the
+    /// authority holds, it withholds a named rule instead of deciding; those are listed here. A correction of a
+    /// record that was never filed must be refused.
+    /// </summary>
+    private async Task CorrectFilingPerCountryAsync()
+    {
+        Case("Correct the filing per country", "read_gir (document) → generate_gir (GIR102) → validate_gir with the filing history");
+        foreach (var jurisdiction in Countries("gir"))
+        {
+            var results = new List<string>();
+            foreach (var (step, neverFiled) in new[] { ("correction", false), ("unknown record", true) })
+            {
+                var (correction, history, error) = await CorrectionAsync(jurisdiction, neverFiled);
+                if (correction is null)
+                {
+                    Record("gir", jurisdiction, step, "correction", false, "failed", Detail(error), results);
+                    continue;
+                }
+
+                var bytes = Encoding.UTF8.GetBytes(correction);
+                var request = GirValidation(correction, jurisdiction, bytes);
+                foreach (var (key, value) in history)
+                {
+                    request[$"validationContext.{key}"] = value;
+                }
+
+                var (validation, validationError) = await transport.TryCallAsync("gir/validate", request);
+                var errors = Issues(validation, "ruleId");
+                var withheld = (validation?["issues"]?.AsArray() ?? [])
+                    .Where(issue => issue?["severityAdjustment"]?.ToString() == "verdict-withheld-missing-context")
+                    .Select(issue => issue?["ruleId"]?.ToString() ?? "").Order(StringComparer.Ordinal).ToList();
+                var expectedWithheld = WithheldOnCorrection.GetValueOrDefault(jurisdiction, []);
+                var passed = validationError is null && (neverFiled
+                    ? IsFalse(validation, "isValid") && errors.Count > 0
+                    : errors.Count == 0 && withheld.SequenceEqual(expectedWithheld)
+                      && IsTrue(validation, "isComplete") == (expectedWithheld.Length == 0));
+                var outcome = neverFiled
+                    ? Outcome(validation, errors, validationError)
+                    : errors.Count > 0 ? Outcome(validation, errors, validationError)
+                    : withheld.Count == 0 ? "accepted" : $"no finding, withheld {string.Join(",", withheld)}";
+                Record("gir", jurisdiction, step, "correction", passed, outcome, IssueLines(validation, validationError), results);
+            }
+
+            Console.WriteLine($"  GIR correction {jurisdiction}  {string.Join("  ", results)}");
+        }
+    }
+
+    /// <summary>Packs that compare a correction with records the validation context cannot carry, and the rules they withhold.</summary>
+    private static readonly Dictionary<string, string[]> WithheldOnCorrection = new()
+    {
+        ["AT"] = ["AT-GIR-AT00010"],
+        ["IE"] = ["IE-GIR-9999-3", "IE-GIR-9999-4"],
+        ["LU"] = ["LU-GIR-99001", "LU-GIR-99004"],
+        ["PL"] = ["PL-GIR-REG.031", "PL-GIR-REG.032"]
+    };
+
+    private async Task<(string? Xml, Dictionary<string, object?> History, string? Error)> CorrectionAsync(string jurisdiction, bool neverFiled)
+    {
+        var bytes = await File.ReadAllBytesAsync(Path.Combine(documentsPath, "gir", jurisdiction, "positive.xml"));
+        var original = Encoding.UTF8.GetString(bytes);
+        var (read, readError) = await transport.TryCallAsync("gir/read", GirValidation(original, jurisdiction, bytes));
+        if (read?["document"]?.DeepClone() is not { } document)
+        {
+            return (null, [], readError ?? read?["documentNotOffered"]?.ToString());
+        }
+
+        var messageSpec = document["messageSpec"]!;
+        var filed = messageSpec["messageRefId"]!.ToString();
+        var filedAt = DateTime.Parse(messageSpec["timestamp"]!.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+        var correctedAt = filedAt.AddDays(30);
+        messageSpec["messageRefId"] = Successor(filed, correctedAt);
+        messageSpec["messageTypeIndic"] = "GIR102";
+        messageSpec["timestamp"] = correctedAt.ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture);
+        foreach (var body in document["globeBody"]!.AsArray())
+        {
+            foreach (var section in (string[])["filingInfo", "generalSection", "summary", "jurisdictionSection", "utprAttribution"])
+            {
+                IEnumerable<JsonNode> records = body![section] switch
+                {
+                    JsonArray array => array.Select(record => record!),
+                    JsonObject record => [record],
+                    _ => []
+                };
+                foreach (var record in records)
+                {
+                    var docSpec = record["docSpec"]!;
+                    if (section == "filingInfo")
+                    {
+                        docSpec["docTypeIndic"] = "OECD0";
+                        continue;
+                    }
+
+                    var docRefId = docSpec["docRefId"]!.ToString();
+                    docSpec["docTypeIndic"] = "OECD2";
+                    docSpec["docRefId"] = Successor(docRefId, correctedAt);
+                    docSpec["corrDocRefId"] = neverFiled ? docRefId + "-NEVER-FILED" : docRefId;
+                }
+            }
+        }
+
+        var (generated, generateError) = await transport.TryCallAsync("gir/generate", new Dictionary<string, object?>
+        {
+            ["document"] = document,
+            ["nationalEnvelope"] = read["nationalEnvelope"]?.DeepClone(),
+            ["jurisdiction"] = jurisdiction,
+            ["validateOutput"] = false
+        });
+        var xml = generated?["xmlContent"]?.ToString();
+        if (xml is not null)
+        {
+            await SaveXmlAsync(transport.Name, Path.Combine(jurisdiction, neverFiled ? "correction-unknown-record.xml" : "correction.xml"), xml);
+        }
+
+        return (xml, new Dictionary<string, object?>
+        {
+            ["previousMessageRefIds"] = new JsonArray(filed),
+            ["priorDocuments"] = AcceptedRecords(original),
+            ["previousSubmissionTimestamp"] = filedAt.ToString("O", CultureInfo.InvariantCulture),
+            ["acceptedInitialReportingPeriods"] = new JsonArray(messageSpec["reportingPeriod"]!.ToString())
+        }, generateError);
+    }
+
+    /// <summary>
+    /// A new identifier in the format of the one it follows, as a filer's software would create it: a new UUID
+    /// version 4 where the old one had a UUID, the creation time where it states one (BG), the next number where it
+    /// ends in digits (PL), otherwise the old one with a suffix.
+    /// </summary>
+    private static string Successor(string identifier, DateTime createdAt)
+    {
+        var uuid = Uuid().Match(identifier);
+        if (uuid.Success)
+        {
+            var hash = MD5.HashData(Encoding.UTF8.GetBytes(identifier));
+            hash[6] = (byte)(hash[6] & 0x0F | 0x40);
+            hash[8] = (byte)(hash[8] & 0x3F | 0x80);
+            var next = Convert.ToHexStringLower(hash);
+            return identifier[..uuid.Index] + $"{next[..8]}-{next[8..12]}-{next[12..16]}-{next[16..20]}-{next[20..]}" + identifier[(uuid.Index + uuid.Length)..];
+        }
+
+        var stamp = CreationTime().Match(identifier);
+        if (stamp.Success)
+        {
+            return identifier[..stamp.Index] + createdAt.ToString("_yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture);
+        }
+
+        var digits = TrailingDigits().Match(identifier);
+        return digits.Success
+            ? identifier[..digits.Index] + (long.Parse(digits.Value, CultureInfo.InvariantCulture) + 5000).ToString(new string('0', digits.Length), CultureInfo.InvariantCulture)
+            : identifier + "C";
+    }
+
+    /// <summary>
+    /// The records of the accepted first filing as the authority holds them, with what the correction rules compare
+    /// against: each record's recipient jurisdictions, the UPE's residence and the accepted FilingInfo.
+    /// </summary>
+    private static JsonArray AcceptedRecords(string xml)
+    {
+        var root = XDocument.Parse(xml).Root!;
+        var messageRefId = Value(root, "MessageRefId");
+        var period = Value(root, "ReportingPeriod");
+        var records = new JsonArray();
+        foreach (var body in root.Descendants().Where(element => element.Name.LocalName == "GLOBEBody"))
+        {
+            var filingInfoDocRefId = Value(Child(Child(body, "FilingInfo"), "DocSpec"), "DocRefId");
+            foreach (var section in body.Elements().Where(element => element.Elements().Any(child => child.Name.LocalName == "DocSpec")))
+            {
+                var record = new JsonObject
+                {
+                    ["messageRefId"] = messageRefId,
+                    ["docRefId"] = Value(Child(section, "DocSpec"), "DocRefId"),
+                    ["section"] = section.Name.LocalName,
+                    ["isLatest"] = true,
+                    ["acceptedReportingPeriod"] = period,
+                    ["acceptedFilingInfoDocRefId"] = filingInfoDocRefId,
+                    ["acceptedRecipientCountries"] = Codes(section.Descendants().Where(element => element.Name.LocalName == "RecJurCode"))
+                };
+                if (section.Name.LocalName == "GeneralSection")
+                {
+                    record["acceptedUpeResidenceCountries"] = Codes(section.Descendants().Where(element => element.Name.LocalName == "UPE")
+                        .SelectMany(upe => upe.Descendants().Where(element => element.Name.LocalName == "ResCountryCode")));
+                }
+
+                if (section.Name.LocalName == "FilingInfo")
+                {
+                    var filingCe = Child(section, "FilingCE");
+                    var tin = Child(filingCe, "TIN");
+                    record["acceptedFilingInfo"] = new JsonObject
+                    {
+                        ["nameMne"] = Value(section, "NameMNE"), ["cfsOfUpe"] = Value(section, "CFSofUPE"),
+                        ["currency"] = Value(section, "Currency"), ["periodStart"] = Value(section, "Start"),
+                        ["periodEnd"] = Value(section, "End"), ["fas"] = Value(section, "FAS"),
+                        ["additionalInfo"] = Value(section, "AdditionalInfo")
+                    };
+                    record["acceptedFilingCe"] = new JsonObject
+                    {
+                        ["residenceCountry"] = Value(filingCe, "ResCountryCode"), ["name"] = Value(filingCe, "Name"),
+                        ["tin"] = tin.Value.Trim(), ["role"] = Value(filingCe, "Role"),
+                        ["tinIssuedBy"] = tin.Attribute("issuedBy")?.Value, ["tinType"] = tin.Attribute("TypeOfTIN")?.Value,
+                        ["tinUnknown"] = tin.Attribute("unknown")?.Value == "true"
+                    };
+                }
+
+                records.Add(record);
+            }
+        }
+
+        return records;
+
+        static XElement Child(XElement parent, string name) => parent.Elements().First(element => element.Name.LocalName == name);
+
+        static string? Value(XElement parent, string name) => parent.Descendants().FirstOrDefault(element => element.Name.LocalName == name)?.Value.Trim();
+
+        static JsonArray Codes(IEnumerable<XElement> elements) =>
+            new([.. elements.Select(element => element.Value.Trim()).Distinct().Select(code => (JsonNode)code)]);
+    }
+
+    /// <summary>Every leaf value and attribute of a document as path=value, prefixes and formatting removed.</summary>
+    private static List<string> Content(string xml)
+    {
+        var root = XDocument.Parse(xml).Root!;
+        static string PathOf(XElement element) => string.Join('/', element.AncestorsAndSelf().Reverse().Select(ancestor => ancestor.Name.LocalName));
+        return
+        [
+            .. root.DescendantsAndSelf().Where(element => !element.HasElements).Select(element => $"{PathOf(element)}={element.Value.Trim()}"),
+            .. root.DescendantsAndSelf().SelectMany(element => element.Attributes()
+                .Where(attribute => !attribute.IsNamespaceDeclaration && attribute.Name.Namespace == XNamespace.None)
+                .Select(attribute => $"{PathOf(element)}/@{attribute.Name.LocalName}={attribute.Value}"))
+        ];
+    }
+
+    /// <summary>The entries of <paramref name="left"/> that <paramref name="right"/> lacks, counting duplicates.</summary>
+    private static List<string> Except(List<string> left, List<string> right)
+    {
+        var remaining = right.GroupBy(entry => entry).ToDictionary(group => group.Key, group => group.Count());
+        return [.. left.Where(entry => !(remaining.TryGetValue(entry, out var count) && count > 0 && (remaining[entry] = count - 1) >= 0))];
+    }
+
+    [GeneratedRegex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}", RegexOptions.CultureInvariant)]
+    private static partial Regex Uuid();
+
+    [GeneratedRegex(@"_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$", RegexOptions.CultureInvariant)]
+    private static partial Regex CreationTime();
+
+    [GeneratedRegex(@"\d+$", RegexOptions.CultureInvariant)]
+    private static partial Regex TrailingDigits();
 
     /// <summary>
     /// The receiving authority's answer: a GIR status message that accepts the positive return and one that rejects
