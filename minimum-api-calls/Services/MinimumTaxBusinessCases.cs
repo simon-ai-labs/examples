@@ -51,15 +51,25 @@ public sealed class MinimumTaxBusinessCases(IMinimumTaxTransport transport, stri
     {
         Case("Query capabilities", "GET /v1/capabilities · minimum_tax_capabilities");
         _capabilities = await transport.CallAsync("capabilities", new Dictionary<string, object?>());
+        var gir = Gir;
+        var cbcr = _capabilities?["cbcr"];
         Console.WriteLine($"API version: {_capabilities?["apiVersion"]}");
-        Console.WriteLine($"GIR schema versions: {List(_capabilities?["supportedGirVersions"])}  CbCR schema versions: {List(_capabilities?["supportedCbcrVersions"])}");
-        Console.WriteLine($"Default rule set: {_capabilities?["defaultRuleSet"]}  overlays: {List(_capabilities?["availableOverlays"])}");
-        Console.WriteLine($"Jurisdictions: {List(_capabilities?["availableJurisdictions"])}");
-        foreach (var relaxation in _capabilities?["activeRuleRelaxations"]?.AsArray() ?? [])
+        Console.WriteLine($"GIR schema versions: {List(gir?["supportedSchemaVersions"])}  CbCR schema versions: {List(cbcr?["supportedSchemaVersions"])}");
+        Console.WriteLine($"Default rule set: {gir?["defaultRuleSet"]}  overlays: {List(gir?["availableOverlays"])}");
+        Console.WriteLine($"Jurisdictions: {List(gir?["availableJurisdictions"])}");
+        foreach (var relaxation in gir?["activeRuleRelaxations"]?.AsArray() ?? [])
         {
             Console.WriteLine($"  relaxed: rule {relaxation?["ruleId"]} ({relaxation?["effectiveSeverity"]}): {relaxation?["reason"]}");
         }
+
+        foreach (var check in cbcr?["consistencyChecks"]?.AsArray() ?? [])
+        {
+            Console.WriteLine($"  CbCR check {check?["code"]} ({check?["severity"]}): {check?["description"]}");
+        }
     }
+
+    /// <summary>The GIR part of the capabilities: its own block since API 4.0, the whole document before.</summary>
+    private JsonNode? Gir => _capabilities?["gir"] ?? _capabilities;
 
     /// <summary>
     /// Tax department before filing: is the GIR for this country schema-valid and does it pass the OECD rules and
@@ -146,33 +156,14 @@ public sealed class MinimumTaxBusinessCases(IMinimumTaxTransport transport, stri
     private async Task GenerateGirAsync(JsonNode report)
     {
         Case("Generate a GIR", "POST /v1/gir/generate · generate_gir");
-        // The model read above lists no constituent entities, so the ultimate parent entity with its TIN is
-        // supplied the way a tax engine would supply its calculated data.
-        var xml = await File.ReadAllTextAsync(Path.Combine(documentsPath, "gir", RoundTripJurisdiction, "positive.xml"));
-        var upe = XDocument.Parse(xml).Descendants().First(element => element.Name.LocalName == "UPE")
-            .Descendants().First(element => element.Name.LocalName == "ID");
-        var tin = upe.Elements().First(element => element.Name.LocalName == "TIN");
-        var model = report.DeepClone();
-        model["group"]!["entities"] = new JsonArray(new JsonObject
-        {
-            ["entityId"] = report["group"]?["ultimateParentEntityId"]?.ToString(),
-            ["legalName"] = upe.Elements().First(element => element.Name.LocalName == "Name").Value,
-            ["jurisdictionCode"] = upe.Elements().First(element => element.Name.LocalName == "ResCountryCode").Value,
-            ["taxIdentifiers"] = new JsonArray(new JsonObject
-            {
-                ["tin"] = tin.Value,
-                ["issuedBy"] = tin.Attribute("issuedBy")?.Value,
-                ["tinType"] = tin.Attribute("TypeOfTIN")?.Value
-            }),
-            ["classification"] = "UltimateParentEntity",
-            ["isUltimateParentEntity"] = true,
-            ["isReportingEntity"] = true
-        });
-        Console.WriteLine($"Ultimate parent entity: {model["group"]!["entities"]![0]!["legalName"]}, TIN {tin.Value}");
+        // The model carries the ultimate parent entity and the filing entity with their TINs, which become
+        // UPE/ID/TIN and FilingCE/TIN. A model without a UPE TIN is answered with 422, never with an invented one.
+        var upe = report["group"]?["ultimateParent"];
+        Console.WriteLine($"Ultimate parent entity: {upe?["legalName"]}, TIN {upe?["taxIdentifiers"]?[0]?["tin"]}");
 
         var generated = await transport.CallAsync("gir/generate", new Dictionary<string, object?>
         {
-            ["report"] = model,
+            ["report"] = report,
             ["jurisdiction"] = RoundTripJurisdiction
         });
         var generatedXml = generated?["xmlContent"]?.ToString() ?? throw new InvalidOperationException("The generate result contains no XML.");
@@ -229,10 +220,13 @@ public sealed class MinimumTaxBusinessCases(IMinimumTaxTransport transport, stri
             .Select(tin => (JsonNode)new JsonObject { ["issuedBy"] = tin.IssuedBy, ["tin"] = tin.Tin, ["isValid"] = true })
     ];
 
-    /// <summary>The countries with test documents that the service also lists as jurisdictions.</summary>
+    /// <summary>
+    /// The countries with test documents. A country the service does not list is a failure, not a skip: a run
+    /// that checked nothing must not end as if everything had passed.
+    /// </summary>
     private IEnumerable<string> Countries(string family)
     {
-        var available = _capabilities?["availableJurisdictions"]?.AsArray().Select(code => code?.ToString()).ToHashSet() ?? [];
+        var available = Gir?["availableJurisdictions"]?.AsArray().Select(code => code?.ToString()).ToHashSet() ?? [];
         foreach (var directory in Directory.GetDirectories(Path.Combine(documentsPath, family)).Order())
         {
             var jurisdiction = Path.GetFileName(directory);
@@ -242,7 +236,8 @@ public sealed class MinimumTaxBusinessCases(IMinimumTaxTransport transport, stri
             }
             else
             {
-                Write(ConsoleColor.Yellow, $"  {jurisdiction}: not offered by this deployment, skipped.");
+                _failures++;
+                Write(ConsoleColor.Red, $"  ✘ {family.ToUpperInvariant()} {jurisdiction}: the service does not list this jurisdiction in its capabilities.");
             }
         }
     }
