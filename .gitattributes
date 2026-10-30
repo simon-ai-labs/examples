@@ -1,0 +1,2 @@
+# The test documents were validated byte for byte against the service; keep them identical on every checkout.
+minimum-api-calls/TestDocuments/**/*.xml text eol=lf
