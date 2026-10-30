@@ -48,15 +48,11 @@ For each of the 27 EU jurisdictions the service lists in `/v1/capabilities`, ove
 | Report the processing status | `gir/status-message/generate` · `generate_gir_status_message` → `gir/status-message/read` · `read_gir_status_message` | the positive is answered `Accepted`, the business negative `Rejected` with exactly the rule codes its validation found, and both read back unchanged |
 | Check a CbCR | `POST /v1/cbcr/validate` · `validate_cbcr` | positive: valid; XSD negative: `CBCR-SCHEMA-ERR`; business negative: `CBCR-SEM-002` |
 | Read a CbCR | `POST /v1/cbcr/read` · `read_cbcr` | valid, with the country as transmitting country |
+| Reject invalid input | `generate_gir`, `read_gir`, `read_cbcr`, `validate_cbcr` | an unknown country, currency or TIN type, a constituent entity without owners and a reported computation without its figures are refused with 422 naming the field; a CbCR sent to `gir/read` and a GIR sent to `cbcr/read` with 400; a CbCR total of 0 against non-zero parts is reported as `CBCR-SEM-004`. The service states no value the caller did not give. |
 
-Before the business cases, the REST walkthrough checks the operational endpoints `GET /healthz` and `GET /api/status`, which have no MCP tool. That makes 297 business steps per transport (81 GIR and 81 CbCR checks, 27 GIR reads, 27 regenerations, 54 status messages, 27 CbCR reads), plus the two operational endpoints over REST. A step that does not get its expected result is printed with its issues or the service's error, the run continues with the next country and exits with 1 at the end. Results go to `output/rest` and `output/mcp`: per country the read GIR model, the generated GIR and the read CbCR model, and `summary.json` with every step.
+Before the business cases, the REST walkthrough checks the operational endpoints `GET /health` and `GET /api/status`, which have no MCP tool. That makes 305 steps per transport: 81 GIR and 81 CbCR checks, 27 GIR reads, 27 regenerations, 54 status messages, 27 CbCR reads and 8 refused inputs, plus the two operational endpoints over REST. A step that does not get its expected result is printed with its issues or the service's error, the run continues with the next country and exits with 1 at the end. Results go to `output/rest` and `output/mcp`: per country the read GIR model, the generated GIR and the read CbCR model, and `summary.json` with every step.
 
-**Known service defects (dev, 2026-10-30).** 34 steps per transport fail because of the service, not the samples, and stay red on purpose until it is fixed:
-
-- `gir/read` answers the Austrian `GLOBE_NATIONAL` document with HTTP 500.
-- `gir/generate` loses national formats the read document met: BG (`BG-GIR-DOCREF`), ES (`ES-GIR-5.3a`), IT (`IT-GIR-E6011`), NL (`NL-GIR-5.0`, `version` 1.1), PL (`PL-GIR-XSD.1`, numeric DocRefIds) and SI (`SI-GIR-60011`).
-- `gir/status-message/read` returns no issues for a rejecting status message whose XML carries the record errors, so all 27 rejections fail. `gir/status-message/generate` also cuts national rule codes to ten characters (`DE-GIR-99011` becomes `DE-GIR-990`).
-- `GET /healthz` is answered by Cloud Run's front end with 404, because Cloud Run reserves paths ending in `z` (REST only).
+Against the dev deployment of 2026-10-30, all 305 steps pass over REST and over MCP.
 
 ## Quick Start
 

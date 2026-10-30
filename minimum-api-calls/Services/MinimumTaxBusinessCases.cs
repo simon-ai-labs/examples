@@ -36,6 +36,7 @@ public sealed partial class MinimumTaxBusinessCases(IMinimumTaxTransport transpo
         await ReportStatusPerCountryAsync();
         await CheckCbcrPerCountryAsync();
         await ReadCbcrPerCountryAsync();
+        await RejectInvalidInputAsync();
         await SaveJsonAsync(transport.Name, "summary.json", _summary);
 
         if (_failures > 0)
@@ -196,7 +197,8 @@ public sealed partial class MinimumTaxBusinessCases(IMinimumTaxTransport transpo
 
                 var (read, readError) = await transport.TryCallAsync("gir/status-message/read", new Dictionary<string, object?> { ["xmlContent"] = statusXml });
                 var expectedCodes = errors.Select(error => error?["ruleId"]?.ToString()).Order().ToList();
-                var readCodes = (read?["issues"]?.AsArray() ?? []).Select(issue => issue?["ruleId"]?.ToString()).Order().ToList();
+                // reportedErrors are the errors the message reports about the return; issues are the message's own schema issues.
+                var readCodes = (read?["reportedErrors"]?.AsArray() ?? []).Select(issue => issue?["ruleId"]?.ToString()).Order().ToList();
                 var passed = readError is null
                     && IsTrue(generated, "isValidSchema") && IsTrue(read, "isValidSchema")
                     && read?["acceptanceStatus"]?.ToString() == (accepted ? "Accepted" : "Rejected")
@@ -262,6 +264,70 @@ public sealed partial class MinimumTaxBusinessCases(IMinimumTaxTransport transpo
 
             Console.WriteLine($"  CbCR {jurisdiction}  {string.Join("  ", results)}");
         }
+    }
+
+    /// <summary>
+    /// Input the service must refuse rather than complete on the caller's behalf: an unknown code, a constituent
+    /// entity without owners, a reported computation without its figures, a document of the wrong kind and a tool
+    /// call without its document. Each is expected with its status code, so a substitute value or a server error fails.
+    /// </summary>
+    private async Task RejectInvalidInputAsync()
+    {
+        Case("Reject invalid input", "generate_gir · read_gir · read_cbcr · validate_cbcr with input the service must refuse");
+        var bytes = await File.ReadAllBytesAsync(Path.Combine(documentsPath, "gir", "DE", "positive.xml"));
+        var (read, readError) = await transport.TryCallAsync("gir/read", GirValidation(Encoding.UTF8.GetString(bytes), "DE", bytes));
+        var model = read?["report"] ?? throw new InvalidOperationException($"The DE positive GIR could not be read: {readError}");
+        var results = new List<string>();
+
+        foreach (var (name, change, field) in new (string, Action<JsonNode>, string)[]
+                 {
+                     ("unknown country", report => report["metadata"]!["transmittingCountry"] = "UK", "country"),
+                     ("unknown currency", report => report["group"]!["reportingCurrency"] = "EURO", "currency"),
+                     ("unknown TIN type", report => report["group"]!["ultimateParent"]!["taxIdentifiers"]![0]!["tinType"] = "GIR9999", "TypeOfTIN"),
+                     ("CE without owners", report => report["group"]!["entities"] = new JsonArray(new JsonObject
+                     {
+                         ["entityId"] = "Sub GmbH", ["legalName"] = "Sub GmbH", ["jurisdictionCode"] = "DE",
+                         ["taxIdentifiers"] = new JsonArray(new JsonObject { ["tin"] = "5555555555555", ["issuedBy"] = "DE", ["tinType"] = "GIR3001" })
+                     }), "directOwnerships"),
+                     ("computation without figures", report => report["group"]!["jurisdictions"] = new JsonArray(new JsonObject
+                     {
+                         ["jurisdictionCode"] = "DE",
+                         ["netGlobeIncomeLoss"] = new JsonObject { ["financialAccountingNetIncome"] = 100, ["netGlobeIncomeOrLoss"] = 100 }
+                     }), "effectiveTaxRate.calculatedEtr")
+                 })
+        {
+            var changed = model.DeepClone();
+            change(changed);
+            var (_, error) = await transport.TryCallAsync("gir/generate", new Dictionary<string, object?> { ["report"] = changed, ["validateOutput"] = false });
+            Expect(name, error, 422, field, results);
+        }
+
+        var cbcr = await File.ReadAllTextAsync(Path.Combine(documentsPath, "cbcr", "DE", "positive.xml"));
+        var gir = Encoding.UTF8.GetString(bytes);
+        var (_, girReadError) = await transport.TryCallAsync("gir/read", new Dictionary<string, object?> { ["xmlContent"] = cbcr });
+        Expect("gir/read with a CbCR", girReadError, 400, "GloBE Information Return", results);
+        var (_, cbcrReadError) = await transport.TryCallAsync("cbcr/read", new Dictionary<string, object?> { ["xmlContent"] = gir });
+        Expect("cbcr/read with a GIR", cbcrReadError, 400, "CbC report", results);
+
+        // A reported total of 0 against non-zero parts is the inconsistency CBCR-SEM-004 exists to report.
+        var (validation, validationError) = await transport.TryCallAsync("cbcr/validate", new Dictionary<string, object?>
+        {
+            ["xmlContent"] = cbcr.Replace(">900000000</cbc:Total>", ">0</cbc:Total>", StringComparison.Ordinal)
+        });
+        var codes = (validation?["issues"]?.AsArray() ?? []).Select(issue => issue?["code"]?.ToString()).ToList();
+        Record("input", "DE", "total 0", "rejected input", validationError is null && codes.Contains("CBCR-SEM-004"),
+            validationError is null ? $"issues {string.Join(",", codes)}" : "failed", Detail(validationError), results);
+
+        Console.WriteLine($"  Input  {string.Join("  ", results)}");
+    }
+
+    /// <summary>A refused call: its error must carry the expected status and name the field.</summary>
+    private void Expect(string name, string? error, int status, string field, List<string> results)
+    {
+        var passed = error is not null
+            && (error.Contains($"({status} ", StringComparison.Ordinal) || error.Contains($"\"status\":{status}", StringComparison.Ordinal))
+            && error.Contains(field, StringComparison.OrdinalIgnoreCase);
+        Record("input", "DE", name, "rejected input", passed, error is null ? "accepted" : $"refused {status}", Detail(error ?? "the service accepted the input"), results);
     }
 
     /// <summary>

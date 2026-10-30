@@ -69,9 +69,9 @@ public sealed partial class MinimumTaxRestService(HttpClient http, string? apiKe
     /// </summary>
     private async Task<int> CheckServiceStatusAsync()
     {
-        Step("[REST] Check the service  (GET /healthz · GET /api/status)");
+        Step("[REST] Check the service  (GET /health · GET /api/status)");
         var failures = 0;
-        foreach (var path in (string[])["healthz", "api/status"])
+        foreach (var path in (string[])["health", "api/status"])
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, path);
             if (!string.IsNullOrWhiteSpace(apiKey))
