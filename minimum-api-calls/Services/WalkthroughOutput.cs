@@ -33,8 +33,7 @@ public static class WalkthroughOutput
             throw new InvalidOperationException($"The service returned no content for {fileName}.");
         }
 
-        var directory = Directory.CreateDirectory(Path.Combine(OutputDirectory, transport));
-        var path = Path.Combine(directory.FullName, fileName);
+        var path = OutputPath(transport, fileName);
         await File.WriteAllTextAsync(path, xml, new UTF8Encoding(false));
         Console.WriteLine($"✔ Saved {path}");
     }
@@ -42,9 +41,16 @@ public static class WalkthroughOutput
     /// <summary>Writes a JSON result, such as the typed GIR model, to <see cref="OutputDirectory"/>.</summary>
     public static async Task SaveJsonAsync(string transport, string fileName, JsonNode node)
     {
-        var directory = Directory.CreateDirectory(Path.Combine(OutputDirectory, transport));
-        var path = Path.Combine(directory.FullName, fileName);
+        var path = OutputPath(transport, fileName);
         await File.WriteAllTextAsync(path, node.ToJsonString(JsonOptions));
         Console.WriteLine($"✔ Saved {path}");
+    }
+
+    /// <summary>A path below output/&lt;transport&gt;; <paramref name="fileName"/> may name a subfolder, such as the country.</summary>
+    private static string OutputPath(string transport, string fileName)
+    {
+        var path = Path.Combine(OutputDirectory, transport, fileName);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        return path;
     }
 }

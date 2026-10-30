@@ -41,7 +41,19 @@ public sealed class MinimumTaxMcpService(Uri endpoint, string? apiKey, string do
     /// </summary>
     public async Task<JsonNode?> CallAsync(string operation, IReadOnlyDictionary<string, object?> values)
     {
-        var name = operation.Split('/') is [var family, var action] ? $"{action}_{family}" : operation;
+        var (result, error) = await TryCallAsync(operation, values);
+        return error is null ? result : throw new InvalidOperationException(error);
+    }
+
+    public async Task<(JsonNode? Result, string? Error)> TryCallAsync(string operation, IReadOnlyDictionary<string, object?> values)
+    {
+        // gir/status-message/generate → generate_gir_status_message, gir/validate → validate_gir.
+        var name = operation.Split('/') switch
+        {
+            [var family, var action] => $"{action}_{family}",
+            [var family, var subject, var action] => $"{action}_{family}_{subject.Replace('-', '_')}",
+            _ => operation
+        };
         var tool = _tools.Values.FirstOrDefault(candidate => candidate.Name == name || candidate.Name.EndsWith($"_{name}", StringComparison.Ordinal))
             ?? throw new InvalidOperationException($"The MCP server offers no tool for '{operation}'.");
         var schema = JsonNode.Parse(tool.InputSchema.GetRawText())!;
@@ -53,12 +65,12 @@ public sealed class MinimumTaxMcpService(Uri endpoint, string? apiKey, string do
         var text = result.Content.OfType<TextContentBlock>().FirstOrDefault()?.Text;
         if (result.IsError == true)
         {
-            throw new InvalidOperationException($"MCP tool '{tool.Name}' failed: {text}");
+            return (null, $"MCP tool '{tool.Name}' failed: {text}");
         }
 
-        return result.StructuredContent is { } structured
+        return (result.StructuredContent is { } structured
             ? JsonNode.Parse(structured.GetRawText())
-            : JsonNode.Parse(text ?? throw new InvalidOperationException($"MCP tool '{tool.Name}' returned no content."));
+            : JsonNode.Parse(text ?? throw new InvalidOperationException($"MCP tool '{tool.Name}' returned no content.")), null);
     }
 
     private Task<McpClient> ConnectAsync()

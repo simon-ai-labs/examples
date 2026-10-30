@@ -22,10 +22,17 @@ public sealed partial class MinimumTaxRestService(HttpClient http, string? apiKe
     {
         Write(ConsoleColor.White, "\n==================== REST walkthrough ====================");
         await LoadDescriptionAsync();
-        return await new MinimumTaxBusinessCases(this, documentsPath).RunAsync();
+        var statusFailures = await CheckServiceStatusAsync();
+        return await new MinimumTaxBusinessCases(this, documentsPath).RunAsync() | (statusFailures > 0 ? 1 : 0);
     }
 
     public async Task<JsonNode?> CallAsync(string operation, IReadOnlyDictionary<string, object?> values)
+    {
+        var (result, error) = await TryCallAsync(operation, values);
+        return error is null ? result : throw new HttpRequestException(error);
+    }
+
+    public async Task<(JsonNode? Result, string? Error)> TryCallAsync(string operation, IReadOnlyDictionary<string, object?> values)
     {
         // Operations are found by their path below /v1/, e.g. "gir/validate" → POST /v1/gir/validate.
         var (path, method, definition) = (
@@ -51,12 +58,40 @@ public sealed partial class MinimumTaxRestService(HttpClient http, string? apiKe
 
         using var response = await http.SendAsync(request);
         var body = await response.Content.ReadAsStringAsync();
-        if (!response.IsSuccessStatusCode)
+        return response.IsSuccessStatusCode
+            ? (JsonNode.Parse(body), null)
+            : (null, $"{method} {path} failed ({(int)response.StatusCode} {response.StatusCode}): {body}");
+    }
+
+    /// <summary>
+    /// The operational endpoints outside /v1, which have no MCP tool: liveness and service status. Returns the
+    /// number of endpoints that did not answer with success.
+    /// </summary>
+    private async Task<int> CheckServiceStatusAsync()
+    {
+        Step("[REST] Check the service  (GET /healthz · GET /api/status)");
+        var failures = 0;
+        foreach (var path in (string[])["healthz", "api/status"])
         {
-            throw new HttpRequestException($"{method} {path} failed ({(int)response.StatusCode} {response.StatusCode}): {body}", null, response.StatusCode);
+            using var request = new HttpRequestMessage(HttpMethod.Get, path);
+            if (!string.IsNullOrWhiteSpace(apiKey))
+            {
+                request.Headers.Add("X-API-Key", apiKey);
+            }
+
+            using var response = await http.SendAsync(request);
+            var body = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                Write(ConsoleColor.Green, $"  ✔ GET /{path}: {(int)response.StatusCode} {body}");
+                continue;
+            }
+
+            failures++;
+            Write(ConsoleColor.Red, $"  ✘ GET /{path}: {(int)response.StatusCode} {response.StatusCode} ({response.Content.Headers.ContentType?.MediaType})");
         }
 
-        return JsonNode.Parse(body);
+        return failures;
     }
 
     /// <summary>Reads /docs/, follows it to the OpenAPI description and lists the documented operations.</summary>

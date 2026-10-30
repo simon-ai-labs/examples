@@ -1,20 +1,21 @@
 using System.Text;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using static MinimumTaxServices.Samples.Services.WalkthroughOutput;
 
 namespace MinimumTaxServices.Samples.Services;
 
 /// <summary>
-/// The business cases of the Minimum Tax API, run identically over REST and MCP. Every country in
-/// TestDocuments has a positive document and two negative ones for the GloBE Information Return (GIR) and
-/// for the Country-by-Country Report (CbCR): one the XML Schema rejects (technical) and one the business
-/// rules reject (fachlich). The jurisdictions are taken from the capabilities at runtime.
+/// The business cases of the Minimum Tax API, run identically over REST and MCP, for every country in
+/// TestDocuments. Each country has a positive document and two negative ones for the GloBE Information Return
+/// (GIR) and for the Country-by-Country Report (CbCR): one the XML Schema rejects (technical) and one the
+/// business rules reject. Around the checks the walkthrough reads each GIR into the typed model, generates it
+/// again, reports the processing status back as a GIR status message, and reads each CbCR. The jurisdictions
+/// are taken from the capabilities at runtime.
 /// </summary>
-public sealed class MinimumTaxBusinessCases(IMinimumTaxTransport transport, string documentsPath)
+public sealed partial class MinimumTaxBusinessCases(IMinimumTaxTransport transport, string documentsPath)
 {
-    private const string RoundTripJurisdiction = "DE";
-
     private static readonly (string File, string Kind)[] Documents =
     [
         ("positive.xml", "positive"),
@@ -23,6 +24,7 @@ public sealed class MinimumTaxBusinessCases(IMinimumTaxTransport transport, stri
     ];
 
     private readonly JsonArray _summary = [];
+    private readonly Dictionary<string, JsonNode?> _businessRejections = [];
     private JsonNode? _capabilities;
     private int _failures;
 
@@ -30,15 +32,15 @@ public sealed class MinimumTaxBusinessCases(IMinimumTaxTransport transport, stri
     {
         await QueryCapabilitiesAsync();
         await CheckGirPerCountryAsync();
+        await ReadAndGenerateGirPerCountryAsync();
+        await ReportStatusPerCountryAsync();
         await CheckCbcrPerCountryAsync();
-        var report = await ReadGirAsync();
-        await GenerateGirAsync(report);
-        await ReadCbcrAsync();
-        await SaveJsonAsync(transport.Name, "validation-summary.json", _summary);
+        await ReadCbcrPerCountryAsync();
+        await SaveJsonAsync(transport.Name, "summary.json", _summary);
 
         if (_failures > 0)
         {
-            Write(ConsoleColor.Red, $"\n✘ {_failures} document(s) over {transport.Name.ToUpperInvariant()} did not get the expected result.");
+            Write(ConsoleColor.Red, $"\n✘ {_failures} step(s) over {transport.Name.ToUpperInvariant()} did not get the expected result.");
             return 1;
         }
 
@@ -86,20 +88,128 @@ public sealed class MinimumTaxBusinessCases(IMinimumTaxTransport transport, stri
             {
                 var bytes = await File.ReadAllBytesAsync(Path.Combine(documentsPath, "gir", jurisdiction, file));
                 var xml = Encoding.UTF8.GetString(bytes);
-                var validation = await transport.CallAsync("gir/validate", GirValidation(xml, jurisdiction, bytes));
+                var (validation, error) = await transport.TryCallAsync("gir/validate", GirValidation(xml, jurisdiction, bytes));
                 var issues = Issues(validation, "ruleId");
-                var passed = file switch
+                var passed = error is null && file switch
                 {
-                    "positive.xml" => validation?["isValid"]?.GetValue<bool>() == true && validation["isComplete"]?.GetValue<bool>() == true,
+                    "positive.xml" => IsTrue(validation, "isValid") && IsTrue(validation, "isComplete"),
                     // Schema findings come from the xsd layer; everything else is a rule of the OECD catalog or the national pack.
-                    "negative-xsd.xml" => validation?["isValid"]?.GetValue<bool>() == false && Errors(validation, "ruleId")
+                    "negative-xsd.xml" => IsFalse(validation, "isValid") && Errors(validation, "ruleId")
                         .Any(issue => issue?["ruleId"]?.ToString() == "SCHEMA-ERR" && issue["source"]?["layer"]?.ToString() == "xsd"),
-                    _ => validation?["isValid"]?.GetValue<bool>() == false && issues.Contains("60020")
+                    _ => IsFalse(validation, "isValid") && issues.Contains("60020")
                 };
-                Record("gir", jurisdiction, file, kind, passed, validation, issues, results);
+                if (file == "negative-business.xml")
+                {
+                    _businessRejections[jurisdiction] = validation;
+                }
+
+                Record("gir", jurisdiction, Path.GetFileNameWithoutExtension(file), kind, passed, Outcome(validation, issues, error), IssueLines(validation, error), results);
             }
 
             Console.WriteLine($"  GIR  {jurisdiction}  {string.Join("  ", results)}");
+        }
+    }
+
+    /// <summary>
+    /// ERP import and filing from calculated data: the positive GIR becomes the typed JSON model, the model becomes
+    /// GIR XML again, and the generated document is validated with its own bytes, as it would be before upload. The
+    /// model keeps the ultimate parent entity and the filing entity with their TINs; generating it again must give
+    /// a return the national pack still accepts.
+    /// </summary>
+    private async Task ReadAndGenerateGirPerCountryAsync()
+    {
+        Case("Read and generate a GIR per country", "POST /v1/gir/read · read_gir → POST /v1/gir/generate · generate_gir → validate_gir");
+        foreach (var jurisdiction in Countries("gir"))
+        {
+            var results = new List<string>();
+            var bytes = await File.ReadAllBytesAsync(Path.Combine(documentsPath, "gir", jurisdiction, "positive.xml"));
+            var xml = Encoding.UTF8.GetString(bytes);
+            var (read, readError) = await transport.TryCallAsync("gir/read", GirValidation(xml, jurisdiction, bytes));
+            var report = read?["report"];
+            var upeTin = report?["group"]?["ultimateParent"]?["taxIdentifiers"]?[0]?["tin"]?.ToString();
+            var readPassed = readError is null && report?["metadata"]?["receivingCountry"]?.ToString() == jurisdiction && !string.IsNullOrEmpty(upeTin);
+            Record("gir", jurisdiction, "read", "read into the model", readPassed,
+                readError is null ? $"{report?["metadata"]?["messageRefId"]}, UPE TIN {upeTin ?? "missing"}" : "failed", Detail(readError), results);
+            if (report is null)
+            {
+                Console.WriteLine($"  GIR  {jurisdiction}  {string.Join("  ", results)}");
+                continue;
+            }
+
+            await SaveJsonAsync(transport.Name, Path.Combine(jurisdiction, "gir.json"), report);
+            var (generated, generateError) = await transport.TryCallAsync("gir/generate", new Dictionary<string, object?>
+            {
+                ["report"] = report,
+                ["jurisdiction"] = jurisdiction
+            });
+            var generatedXml = generated?["xmlContent"]?.ToString();
+            if (generatedXml is null)
+            {
+                Record("gir", jurisdiction, "generate", "generated from the model", false, "failed", Detail(generateError), results);
+                Console.WriteLine($"  GIR  {jurisdiction}  {string.Join("  ", results)}");
+                continue;
+            }
+
+            await SaveXmlAsync(transport.Name, Path.Combine(jurisdiction, "generated-gir.xml"), generatedXml);
+            var generatedBytes = Encoding.UTF8.GetBytes(generatedXml);
+            var (validation, validationError) = await transport.TryCallAsync("gir/validate", GirValidation(generatedXml, jurisdiction, generatedBytes));
+            var issues = Issues(validation, "ruleId");
+            Record("gir", jurisdiction, "generate", "generated from the model",
+                validationError is null && IsTrue(validation, "isValid") && IsTrue(validation, "isComplete"),
+                Outcome(validation, issues, validationError), IssueLines(validation, validationError), results);
+            Console.WriteLine($"  GIR  {jurisdiction}  {string.Join("  ", results)}");
+        }
+    }
+
+    /// <summary>
+    /// The receiving authority's answer: a GIR status message that accepts the positive return and one that rejects
+    /// the business-rule negative with the errors its validation found. Reading each message back must give the same
+    /// status, the same original MessageRefId and, for the rejection, the same rule codes.
+    /// </summary>
+    private async Task ReportStatusPerCountryAsync()
+    {
+        Case("Report the processing status per country",
+            "POST /v1/gir/status-message/generate · generate_gir_status_message → POST /v1/gir/status-message/read · read_gir_status_message");
+        foreach (var jurisdiction in Countries("gir"))
+        {
+            var results = new List<string>();
+            foreach (var (file, accepted) in new[] { ("positive.xml", true), ("negative-business.xml", false) })
+            {
+                var xml = await File.ReadAllTextAsync(Path.Combine(documentsPath, "gir", jurisdiction, file));
+                var messageRefId = MessageRefId().Match(xml).Groups["id"].Value;
+                JsonNode?[] errors = accepted ? [] : Errors(_businessRejections.GetValueOrDefault(jurisdiction), "ruleId").Select(issue => issue!.DeepClone()).ToArray();
+                var step = accepted ? "accepted" : "rejected";
+                var (generated, generateError) = await transport.TryCallAsync("gir/status-message/generate", new Dictionary<string, object?>
+                {
+                    ["originalMessageRefId"] = messageRefId,
+                    ["transmittingCountry"] = jurisdiction,
+                    ["receivingCountry"] = jurisdiction,
+                    ["isAccepted"] = accepted,
+                    ["errors"] = new JsonArray(errors)
+                });
+                var statusXml = generated?["statusMessageXml"]?.ToString();
+                if (statusXml is null)
+                {
+                    Record("status", jurisdiction, step, "status message", false, "generate failed", Detail(generateError), results);
+                    continue;
+                }
+
+                var (read, readError) = await transport.TryCallAsync("gir/status-message/read", new Dictionary<string, object?> { ["xmlContent"] = statusXml });
+                var expectedCodes = errors.Select(error => error?["ruleId"]?.ToString()).Order().ToList();
+                var readCodes = (read?["issues"]?.AsArray() ?? []).Select(issue => issue?["ruleId"]?.ToString()).Order().ToList();
+                var passed = readError is null
+                    && IsTrue(generated, "isValidSchema") && IsTrue(read, "isValidSchema")
+                    && read?["acceptanceStatus"]?.ToString() == (accepted ? "Accepted" : "Rejected")
+                    && read?["originalMessageRefId"]?.ToString() == messageRefId
+                    && readCodes.SequenceEqual(expectedCodes);
+                var detail = readError is not null
+                    ? Detail(readError)
+                    : [$"    expected codes [{string.Join(", ", expectedCodes)}], read back [{string.Join(", ", readCodes)}], status {read?["acceptanceStatus"]}"];
+                Record("status", jurisdiction, step, "status message", passed,
+                    $"{read?["acceptanceStatus"] ?? "unread"} [{string.Join(",", readCodes)}]", detail, results);
+            }
+
+            Console.WriteLine($"  GIR status {jurisdiction}  {string.Join("  ", results)}");
         }
     }
 
@@ -116,86 +226,50 @@ public sealed class MinimumTaxBusinessCases(IMinimumTaxTransport transport, stri
             foreach (var (file, kind) in Documents)
             {
                 var xml = await File.ReadAllTextAsync(Path.Combine(documentsPath, "cbcr", jurisdiction, file));
-                var validation = await transport.CallAsync("cbcr/validate", new Dictionary<string, object?> { ["xmlContent"] = xml });
+                var (validation, error) = await transport.TryCallAsync("cbcr/validate", new Dictionary<string, object?> { ["xmlContent"] = xml });
                 var issues = Issues(validation, "code");
-                var passed = file switch
+                var passed = error is null && file switch
                 {
-                    "positive.xml" => validation?["isValid"]?.GetValue<bool>() == true,
-                    "negative-xsd.xml" => validation?["isValid"]?.GetValue<bool>() == false && issues.Contains("CBCR-SCHEMA-ERR"),
-                    _ => validation?["isValid"]?.GetValue<bool>() == false && issues.Contains("CBCR-SEM-002")
+                    "positive.xml" => IsTrue(validation, "isValid"),
+                    "negative-xsd.xml" => IsFalse(validation, "isValid") && issues.Contains("CBCR-SCHEMA-ERR"),
+                    _ => IsFalse(validation, "isValid") && issues.Contains("CBCR-SEM-002")
                 };
-                Record("cbcr", jurisdiction, file, kind, passed, validation, issues, results);
+                Record("cbcr", jurisdiction, Path.GetFileNameWithoutExtension(file), kind, passed, Outcome(validation, issues, error), IssueLines(validation, error), results);
             }
 
             Console.WriteLine($"  CbCR {jurisdiction}  {string.Join("  ", results)}");
         }
     }
 
-    /// <summary>ERP or tax engine import: GIR XML becomes the typed JSON model.</summary>
-    private async Task<JsonNode> ReadGirAsync()
-    {
-        Case("Read a GIR", "POST /v1/gir/read · read_gir");
-        var xml = await File.ReadAllTextAsync(Path.Combine(documentsPath, "gir", RoundTripJurisdiction, "positive.xml"));
-        var read = await transport.CallAsync("gir/read", new Dictionary<string, object?>
-        {
-            ["xmlContent"] = xml,
-            ["jurisdiction"] = RoundTripJurisdiction
-        });
-        var report = read?["report"] ?? throw new InvalidOperationException("The read result contains no report.");
-        Console.WriteLine($"Detected: {read?["detectedSchemaVersion"]}, rule set {read?["ruleSetApplied"]}");
-        Console.WriteLine($"Message {report["metadata"]?["messageRefId"]} ({report["metadata"]?["messageTypeIndic"]}), " +
-                          $"{report["metadata"]?["transmittingCountry"]} → {report["metadata"]?["receivingCountry"]}, group {report["group"]?["groupName"]}");
-        await SaveJsonAsync(transport.Name, $"gir-{RoundTripJurisdiction}.json", report);
-        return report;
-    }
-
-    /// <summary>
-    /// Filing from calculated data: the typed model becomes GIR XML. The generated document is validated again
-    /// with its own bytes, as it would be before it is uploaded.
-    /// </summary>
-    private async Task GenerateGirAsync(JsonNode report)
-    {
-        Case("Generate a GIR", "POST /v1/gir/generate · generate_gir");
-        // The model carries the ultimate parent entity and the filing entity with their TINs, which become
-        // UPE/ID/TIN and FilingCE/TIN. A model without a UPE TIN is answered with 422, never with an invented one.
-        var upe = report["group"]?["ultimateParent"];
-        Console.WriteLine($"Ultimate parent entity: {upe?["legalName"]}, TIN {upe?["taxIdentifiers"]?[0]?["tin"]}");
-
-        var generated = await transport.CallAsync("gir/generate", new Dictionary<string, object?>
-        {
-            ["report"] = report,
-            ["jurisdiction"] = RoundTripJurisdiction
-        });
-        var generatedXml = generated?["xmlContent"]?.ToString() ?? throw new InvalidOperationException("The generate result contains no XML.");
-        Console.WriteLine($"MessageRefId {generated?["messageRefId"]}, DocRefId {generated?["docRefId"]}");
-        await SaveXmlAsync(transport.Name, $"generated-gir-{RoundTripJurisdiction}.xml", generatedXml);
-
-        var bytes = Encoding.UTF8.GetBytes(generatedXml);
-        var validation = await transport.CallAsync("gir/validate", GirValidation(generatedXml, RoundTripJurisdiction, bytes));
-        var results = new List<string>();
-        Record("gir", RoundTripJurisdiction, "generated", "generated",
-            validation?["isValid"]?.GetValue<bool>() == true && validation["isComplete"]?.GetValue<bool>() == true,
-            validation, Issues(validation, "ruleId"), results);
-        Console.WriteLine($"Validating the generated GIR: {results[0]}");
-    }
-
     /// <summary>CbCR import: the XML becomes the typed JSON model, with the schema issues found while reading.</summary>
-    private async Task ReadCbcrAsync()
+    private async Task ReadCbcrPerCountryAsync()
     {
-        Case("Read a CbCR", "POST /v1/cbcr/read · read_cbcr");
-        var xml = await File.ReadAllTextAsync(Path.Combine(documentsPath, "cbcr", RoundTripJurisdiction, "positive.xml"));
-        var read = await transport.CallAsync("cbcr/read", new Dictionary<string, object?> { ["xmlContent"] = xml });
-        var report = read?["report"] ?? throw new InvalidOperationException("The read result contains no report.");
-        Console.WriteLine($"Detected: CbC XML {read?["detectedSchemaVersion"]}, valid = {read?["isValid"]}");
-        Console.WriteLine($"Message {report["metadata"]?["messageRefId"]}, {report["metadata"]?["transmittingCountry"]} → {report["metadata"]?["receivingCountry"]}");
-        await SaveJsonAsync(transport.Name, $"cbcr-{RoundTripJurisdiction}.json", report);
+        Case("Read a CbCR per country", "POST /v1/cbcr/read · read_cbcr");
+        foreach (var jurisdiction in Countries("cbcr"))
+        {
+            var results = new List<string>();
+            var xml = await File.ReadAllTextAsync(Path.Combine(documentsPath, "cbcr", jurisdiction, "positive.xml"));
+            var (read, error) = await transport.TryCallAsync("cbcr/read", new Dictionary<string, object?> { ["xmlContent"] = xml });
+            var report = read?["report"];
+            var passed = error is null && IsTrue(read, "isValid") && report?["metadata"]?["transmittingCountry"]?.ToString() == jurisdiction;
+            Record("cbcr", jurisdiction, "read", "read into the model", passed,
+                error is null ? $"{report?["metadata"]?["messageRefId"]}, {report?["metadata"]?["transmittingCountry"]} → {report?["metadata"]?["receivingCountry"]}" : "failed",
+                IssueLines(read, error), results);
+            if (report is not null)
+            {
+                await SaveJsonAsync(transport.Name, Path.Combine(jurisdiction, "cbcr.json"), report);
+            }
+
+            Console.WriteLine($"  CbCR {jurisdiction}  {string.Join("  ", results)}");
+        }
     }
 
     /// <summary>
-    /// The request for /v1/gir/validate. The validation context states what a filer knows and the document
-    /// cannot show: this is a first filing with no earlier messages, the TINs were checked against the national
-    /// registers, and these are the original file bytes. Without it the stateful OECD rules and the encoding
-    /// checks withhold their verdict and the result is valid only as far as it was checked (isComplete = false).
+    /// The request for /v1/gir/validate and /v1/gir/read. The validation context states what a filer knows and the
+    /// document cannot show: this is a first filing with no earlier messages, the TINs were checked against the
+    /// national registers, and these are the original file bytes. Without it the stateful OECD rules and the
+    /// encoding checks withhold their verdict and the result is valid only as far as it was checked
+    /// (isComplete = false).
     /// </summary>
     private static Dictionary<string, object?> GirValidation(string xml, string jurisdiction, byte[] bytes) => new()
     {
@@ -242,34 +316,42 @@ public sealed class MinimumTaxBusinessCases(IMinimumTaxTransport transport, stri
         }
     }
 
-    private void Record(string family, string jurisdiction, string file, string kind, bool passed, JsonNode? validation, List<string> issues, List<string> results)
+    private void Record(string family, string jurisdiction, string step, string kind, bool passed, string outcome, IEnumerable<string> detail, List<string> results)
     {
         _summary.Add(new JsonObject
         {
             ["document"] = family,
             ["jurisdiction"] = jurisdiction,
-            ["file"] = file,
+            ["step"] = step,
             ["kind"] = kind,
             ["passed"] = passed,
-            ["isValid"] = validation?["isValid"]?.DeepClone(),
-            ["isComplete"] = validation?["isComplete"]?.DeepClone(),
-            ["issues"] = new JsonArray([.. issues.Select(issue => (JsonNode)issue)])
+            ["outcome"] = outcome
         });
 
-        var outcome = validation?["isValid"]?.GetValue<bool>() == true ? "valid" : $"invalid {string.Join(",", issues.Distinct().Take(3))}";
-        results.Add($"{(passed ? "✔" : "✘")} {Path.GetFileNameWithoutExtension(file)}: {outcome}");
+        results.Add($"{(passed ? "✔" : "✘")} {step}: {outcome}");
         if (passed)
         {
             return;
         }
 
         _failures++;
-        Write(ConsoleColor.Red, $"  ✘ {family.ToUpperInvariant()} {jurisdiction} {file} ({kind}) did not get the expected result:");
-        foreach (var issue in validation?["issues"]?.AsArray() ?? [])
+        Write(ConsoleColor.Red, $"  ✘ {family.ToUpperInvariant()} {jurisdiction} {step} ({kind}) did not get the expected result:");
+        foreach (var line in detail)
         {
-            Console.WriteLine($"    - [{issue?["severity"]}] {issue?["ruleId"] ?? issue?["code"]} at {issue?["path"] ?? issue?["xPath"]}: {issue?["message"]}");
+            Console.WriteLine(line);
         }
     }
+
+    private static string Outcome(JsonNode? validation, List<string> issues, string? error) =>
+        error is not null ? "failed" : IsTrue(validation, "isValid") ? "valid" : $"invalid {string.Join(",", issues.Distinct().Take(3))}";
+
+    private static IEnumerable<string> IssueLines(JsonNode? result, string? error) =>
+        error is not null
+            ? Detail(error)
+            : ((result?["issues"] ?? result?["validationIssues"])?.AsArray() ?? [])
+                .Select(issue => $"    - [{issue?["severity"]}] {issue?["ruleId"] ?? issue?["code"]} at {issue?["path"] ?? issue?["xPath"]}: {issue?["message"]}");
+
+    private static string[] Detail(string? error) => error is null ? [] : [$"    {error}"];
 
     /// <summary>The rule IDs or codes of the issues that count as errors.</summary>
     private static List<string> Issues(JsonNode? validation, string idProperty) =>
@@ -278,8 +360,15 @@ public sealed class MinimumTaxBusinessCases(IMinimumTaxTransport transport, stri
     private static IEnumerable<JsonNode?> Errors(JsonNode? validation, string idProperty) =>
         (validation?["issues"]?.AsArray() ?? []).Where(issue => issue?["severity"]?.ToString() == "Error" && issue[idProperty] is not null);
 
+    private static bool IsTrue(JsonNode? node, string property) => node?[property]?.GetValue<bool>() == true;
+
+    private static bool IsFalse(JsonNode? node, string property) => node?[property]?.GetValue<bool>() == false;
+
     private void Case(string title, string endpoints) =>
         Step($"[{transport.Name.ToUpperInvariant()}] {title}  ({endpoints})");
 
     private static string List(JsonNode? array) => string.Join(", ", array?.AsArray() ?? []);
+
+    [GeneratedRegex("MessageRefId>(?<id>[^<]+)<", RegexOptions.CultureInvariant)]
+    private static partial Regex MessageRefId();
 }
