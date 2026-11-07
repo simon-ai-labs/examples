@@ -6,9 +6,9 @@ walkthrough covers and how to run it.
 
 | Service | What it does | Links |
 |---|---|---|
-| E-Invoicing Service | Validates, reads, generates, converts and renders XRechnung, ZUGFeRD, Peppol and EN 16931 electronic invoices | [Service](https://invoice-service-api.simon-ai-enterprise.de) · [API documentation](https://invoice-service-api.simon-ai-enterprise.de/docs/) |
-| Minimum Tax API (development) | Validates, reads and generates OECD Pillar Two GloBE Information Returns (GIR) and validates and reads Country-by-Country Reports (CbCR) | [Service](https://minimum-tax-api-dev.simon-ai-enterprise.de) · [API documentation](https://minimum-tax-api-dev.simon-ai-enterprise.de/docs/) |
-| Filing Service | Checks, prints and test-transmits German tax filings to ELSTER | [Service](https://filing-service-api.simon-ai-enterprise.de) · [API documentation](https://filing-service-api.simon-ai-enterprise.de/docs/) |
+| European & German E-Invoicing Service | Validates, reads, generates, converts and renders XRechnung, ZUGFeRD, Peppol and EN 16931 electronic invoices | [Service](https://invoice-service-api.simon-ai-enterprise.de) · [API documentation](https://invoice-service-api.simon-ai-enterprise.de/docs/) |
+| Pillar Two & CbC Reporting Service (development) | Validates, reads and generates OECD Pillar Two GloBE Information Returns (GIR) and validates and reads Country-by-Country Reports (CbCR) | [Service](https://minimum-tax-api-dev.simon-ai-enterprise.de) · [API documentation](https://minimum-tax-api-dev.simon-ai-enterprise.de/docs/) |
+| German Tax Filing Service | Checks, prints and test-transmits German tax filings to ELSTER | [Service](https://filing-service-api.simon-ai-enterprise.de) · [API documentation](https://filing-service-api.simon-ai-enterprise.de/docs/) |
 
 ## Prerequisites and build
 
@@ -22,7 +22,7 @@ dotnet build examples.sln
 ## Services
 
 <details>
-<summary><strong>E-Invoicing Service</strong> — <code>invoice-api-calls</code></summary>
+<summary><strong>European & German E-Invoicing Service</strong> — <code>invoice-api-calls</code></summary>
 
 ### Project
 
@@ -34,7 +34,7 @@ dotnet build examples.sln
 
 ### Build your own tool
 
-**[invoice-api-calls/vibe-coding.md](invoice-api-calls/vibe-coding.md)**: a complete prompt for building your own tool on the E-Invoicing Service with an AI assistant. Copy the whole file into the AI chat (ChatGPT, Claude, Copilot, Cursor, …) and send it. The AI then guides you stage by stage from the first idea through setup, the business cases, error handling, test automation with code coverage, SAST, SCA and DAST to a shippable tool with a CI pipeline.
+**[invoice-api-calls/vibe-coding.md](invoice-api-calls/vibe-coding.md)**: a complete prompt for building your own tool on the European & German E-Invoicing Service with an AI assistant. Copy the whole file into the AI chat (ChatGPT, Claude, Copilot, Cursor, …) and send it. The AI then guides you stage by stage from the first idea through setup, the business cases, error handling, test automation with code coverage, SAST, SCA and DAST to a shippable tool with a CI pipeline.
 
 ### Business cases in the walkthrough
 
@@ -117,18 +117,18 @@ the service's `/openapi/v1.json` and `/v1/capabilities` endpoints.
 </details>
 
 <details>
-<summary><strong>Minimum Tax API</strong> — <code>minimum-api-calls</code></summary>
+<summary><strong>Pillar Two & CbC Reporting Service</strong> — <code>minimum-api-calls</code></summary>
 
 ### Project
 
-**[minimum-api-calls](minimum-api-calls/)**: .NET console walkthrough for the Minimum Tax API over REST and MCP, built the same way as `invoice-api-calls`: requests come from the OpenAPI description behind `/docs` and from the MCP tools' input schemas, without request or response classes.
+**[minimum-api-calls](minimum-api-calls/)**: .NET console walkthrough for the Pillar Two & CbC Reporting Service over REST and MCP, built the same way as `invoice-api-calls`: requests come from the OpenAPI description behind `/docs` and from the MCP tools' input schemas, without request or response classes.
 
 - `MinimumTaxBusinessCases` runs every business endpoint for every country: it validates a positive, a technical (XSD) negative and a business-rule negative document for both GIR and CbCR, reads each GIR into the typed model and generates it again, answers each GIR with an accepting and a rejecting status message and reads them back, and reads each CbCR.
 - `MinimumTaxRestService` and `MinimumTaxMcpService` are the two transports; the test documents and their expected results are described in [minimum-api-calls/TestDocuments/README.md](minimum-api-calls/TestDocuments/README.md).
 
 ### Build your own tool
 
-**[minimum-api-calls/vibe-coding-minimum-tax.md](minimum-api-calls/vibe-coding-minimum-tax.md)**: the same prompt for the Pillar Two & CbC Reporting Service (Minimum Tax API): checking, reading and generating GIRs, GIR status messages, and checking and reading CbC reports, with the test documents from `minimum-api-calls` as the reference results.
+**[minimum-api-calls/vibe-coding-minimum-tax.md](minimum-api-calls/vibe-coding-minimum-tax.md)**: the same prompt for the Pillar Two & CbC Reporting Service: checking, reading and generating GIRs, GIR status messages, and checking and reading CbC reports, with the test documents from `minimum-api-calls` as the reference results.
 
 ### Test matrix
 
@@ -164,15 +164,15 @@ dotnet run --project minimum-api-calls/minimum-api-calls.csproj -- mcp https://m
 </details>
 
 <details>
-<summary><strong>Filing Service</strong> — <code>filing-api-calls</code></summary>
+<summary><strong>German Tax Filing Service</strong> — <code>filing-api-calls</code></summary>
 
 ### Project
 
-**[filing-api-calls](filing-api-calls/)**: .NET console walkthrough for the Filing Service REST API with a synthetic UStVA 2026 filing. Details in [filing-api-calls/README.md](filing-api-calls/README.md).
+**[filing-api-calls](filing-api-calls/)**: .NET console walkthrough for the German Tax Filing Service REST API with a synthetic UStVA 2026 filing. Details in [filing-api-calls/README.md](filing-api-calls/README.md).
 
 ### Build your own tool
 
-**[filing-api-calls/vibe-coding.md](filing-api-calls/vibe-coding.md)**: the same prompt for the Filing Service: finding the route and contract of a filing type and year, checking and printing filings, and test transmissions to ELSTER that are sent only on purpose and never resent after an uncertain failure.
+**[filing-api-calls/vibe-coding.md](filing-api-calls/vibe-coding.md)**: the same prompt for the German Tax Filing Service: finding the route and contract of a filing type and year, checking and printing filings, and test transmissions to ELSTER that are sent only on purpose and never resent after an uncertain failure.
 
 ### Business cases in the walkthrough
 

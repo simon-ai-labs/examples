@@ -7,7 +7,7 @@ public static class ConfigurationHelper
     private const string DefaultBaseUrl = "http://localhost:5000";
 
     /// <summary>
-    /// Resolves the Minimum Tax API base URL and API key.
+    /// Resolves the Pillar Two &amp; CbC Reporting Service base URL and API key.
     /// CLI arguments may be either [baseUrl, apiKey] or [apiKey].
     /// </summary>
     public static (string BaseUrl, string? ApiKey) ResolveConnectionSettings(string[] args)

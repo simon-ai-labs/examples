@@ -9,7 +9,7 @@ using static MinimumTaxServices.Samples.Services.WalkthroughOutput;
 namespace MinimumTaxServices.Samples.Services;
 
 /// <summary>
-/// The business cases of the Minimum Tax API, run identically over REST and MCP, for every country in
+/// The business cases of the Pillar Two &amp; CbC Reporting Service, run identically over REST and MCP, for every country in
 /// TestDocuments. Each country has a positive document and two negative ones for the GloBE Information Return
 /// (GIR) and for the Country-by-Country Report (CbCR): one the XML Schema rejects (technical) and one the
 /// business rules reject. Around the checks the walkthrough reads each GIR into the typed model and into the
