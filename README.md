@@ -1,22 +1,40 @@
 # Simon AI Service Examples
 
-Sample code for the E-Invoicing Service, which validates, reads, generates, converts and renders XRechnung, ZUGFeRD, Peppol and EN 16931 electronic invoices, and for the Minimum Tax API, which validates, reads and generates OECD Pillar Two GloBE Information Returns (GIR) and validates and reads Country-by-Country Reports (CbCR).
+Sample code for three services. Each section below opens with a click and holds everything about one
+service: its project, the copy-paste prompt for building your own tool with an AI assistant, what the
+walkthrough covers and how to run it.
 
-E-Invoicing Service: [https://invoice-service-api.simon-ai-enterprise.de](https://invoice-service-api.simon-ai-enterprise.de) · [API documentation](https://invoice-service-api.simon-ai-enterprise.de/docs/)
+| Service | What it does | Links |
+|---|---|---|
+| E-Invoicing Service | Validates, reads, generates, converts and renders XRechnung, ZUGFeRD, Peppol and EN 16931 electronic invoices | [Service](https://invoice-service-api.simon-ai-enterprise.de) · [API documentation](https://invoice-service-api.simon-ai-enterprise.de/docs/) |
+| Minimum Tax API (development) | Validates, reads and generates OECD Pillar Two GloBE Information Returns (GIR) and validates and reads Country-by-Country Reports (CbCR) | [Service](https://minimum-tax-api-dev.simon-ai-enterprise.de) · [API documentation](https://minimum-tax-api-dev.simon-ai-enterprise.de/docs/) |
+| Filing Service | Checks, prints and test-transmits German tax filings to ELSTER | [Service](https://filing-service-api.simon-ai-enterprise.de) · [API documentation](https://filing-service-api.simon-ai-enterprise.de/docs/) |
 
-Minimum Tax API (development): [https://minimum-tax-api-dev.simon-ai-enterprise.de](https://minimum-tax-api-dev.simon-ai-enterprise.de) · [API documentation](https://minimum-tax-api-dev.simon-ai-enterprise.de/docs/)
+## Prerequisites and build
 
-## Projects
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
+- Access to a deployment of the service the sample talks to, and an `X-API-Key` where it requires one
 
-- **[invoice-api-calls](invoice-api-calls/)**: .NET console walkthrough for the REST API and MCP interface. It has no request or response classes: requests are built at runtime from the service's own JSON definitions.
-  - `InvoiceBusinessCases` walks through every business case of the service (see below), once over each transport.
-  - `InvoiceRestService` reads `/docs`, follows it to the OpenAPI description, looks up each operation there and builds the request body from its schema.
-  - `InvoiceMcpService` connects to `/mcp` over Streamable HTTP, lists the tools and builds each call's arguments from the tool's input schema.
-- **[minimum-api-calls](minimum-api-calls/)**: .NET console walkthrough for the Minimum Tax API over REST and MCP, built the same way as `invoice-api-calls`: requests come from the OpenAPI description behind `/docs` and from the MCP tools' input schemas, without request or response classes.
-  - `MinimumTaxBusinessCases` runs every business endpoint for every country: it validates a positive, a technical (XSD) negative and a business-rule negative document for both GIR and CbCR, reads each GIR into the typed model and generates it again, answers each GIR with an accepting and a rejecting status message and reads them back, and reads each CbCR.
-  - `MinimumTaxRestService` and `MinimumTaxMcpService` are the two transports; the test documents and their expected results are described in [minimum-api-calls/TestDocuments/README.md](minimum-api-calls/TestDocuments/README.md).
-- **[invoice-api-calls/vibe-coding.md](invoice-api-calls/vibe-coding.md)**: a complete prompt for building your own tool on the E-Invoicing Service with an AI assistant. Copy the whole file into the AI chat (ChatGPT, Claude, Copilot, Cursor, …) and send it. The AI then guides you stage by stage from the first idea through setup, the business cases, error handling, test automation with code coverage, SAST, SCA and DAST to a shippable tool with a CI pipeline.
-- **[minimum-api-calls/vibe-coding-minimum-tax.md](minimum-api-calls/vibe-coding-minimum-tax.md)**: the same prompt for the Pillar Two & CbC Reporting Service (Minimum Tax API): checking, reading and generating GIRs, GIR status messages, and checking and reading CbC reports, with the test documents from `minimum-api-calls` as the reference results.
+```bash
+dotnet build examples.sln
+```
+
+## Services
+
+<details>
+<summary><strong>E-Invoicing Service</strong> — <code>invoice-api-calls</code></summary>
+
+### Project
+
+**[invoice-api-calls](invoice-api-calls/)**: .NET console walkthrough for the REST API and MCP interface. It has no request or response classes: requests are built at runtime from the service's own JSON definitions.
+
+- `InvoiceBusinessCases` walks through every business case of the service (see below), once over each transport.
+- `InvoiceRestService` reads `/docs`, follows it to the OpenAPI description, looks up each operation there and builds the request body from its schema.
+- `InvoiceMcpService` connects to `/mcp` over Streamable HTTP, lists the tools and builds each call's arguments from the tool's input schema.
+
+### Build your own tool
+
+**[invoice-api-calls/vibe-coding.md](invoice-api-calls/vibe-coding.md)**: a complete prompt for building your own tool on the E-Invoicing Service with an AI assistant. Copy the whole file into the AI chat (ChatGPT, Claude, Copilot, Cursor, …) and send it. The AI then guides you stage by stage from the first idea through setup, the business cases, error handling, test automation with code coverage, SAST, SCA and DAST to a shippable tool with a CI pipeline.
 
 ### Business cases in the walkthrough
 
@@ -38,39 +56,6 @@ Its pinned upstream source and license are recorded in
 The walkthrough also validates an in-memory negative variant without BuyerReference
 (BT-10) and expects the XRechnung Schematron rule `BR-DE-15` to fail.
 
-### Minimum Tax API test matrix
-
-For each of the 27 EU jurisdictions the service lists in `/v1/capabilities`, over REST and over MCP:
-
-| Business case | Endpoint · MCP tool | Expected result |
-|---|---|---|
-| Check a GIR | `POST /v1/gir/validate` · `validate_gir` | positive: valid and complete under `<CC>-GIR-2025-08`; XSD negative: `SCHEMA-ERR` (`xsd` layer); business negative: OECD rule `60020` |
-| Read and generate a GIR | `gir/read` · `read_gir` → `gir/generate` · `generate_gir` → `validate_gir` | the model names the UPE with its TIN; the generated GIR is valid and complete under the same national pack |
-| Read and generate the GIR document | `gir/read` · `read_gir` (`document`) → `gir/generate` · `generate_gir` → `validate_gir` | the document is the OECD payload in the schema's own structure; generated again it states exactly what the original stated and is valid and complete under the national pack |
-| Correct the filing | `read_gir` (`document`) → `generate_gir` (GIR102) → `validate_gir` with the filing history | FilingInfo resent as OECD0, every other record OECD2 with a new DocRefId in the national format; against the accepted first filing no pack finds anything, AT, IE, LU and PL withhold named rules that need records only the authority holds; a correction of a record never filed is refused |
-| Report the processing status | `gir/status-message/generate` · `generate_gir_status_message` → `gir/status-message/read` · `read_gir_status_message` | the positive is answered `Accepted`, the business negative `Rejected` with exactly the rule codes its validation found, and both read back unchanged |
-| Check a CbCR | `POST /v1/cbcr/validate` · `validate_cbcr` | positive: valid; XSD negative: `CBCR-SCHEMA-ERR`; business negative: `CBCR-SEM-002` |
-| Read a CbCR | `POST /v1/cbcr/read` · `read_cbcr` | valid, with the country as transmitting country |
-| Reject invalid input | `generate_gir`, `read_gir`, `read_cbcr`, `validate_cbcr` | an unknown country, currency or TIN type, a constituent entity without owners and a reported computation without its figures are refused with 422 naming the field; a CbCR sent to `gir/read` and a GIR sent to `cbcr/read` with 400; a CbCR total of 0 against non-zero parts is reported as `CBCR-SEM-004`. The service states no value the caller did not give. |
-
-Before the business cases, the REST walkthrough checks the operational endpoints `GET /health` and `GET /api/status`, which have no MCP tool. That makes 386 steps per transport: 81 GIR and 81 CbCR checks, 27 GIR reads, 27 regenerations, 27 document round trips, 54 corrections, 54 status messages, 27 CbCR reads and 8 refused inputs, plus the two operational endpoints over REST. A step that does not get its expected result is printed with its issues or the service's error, the run continues with the next country and exits with 1 at the end. Results go to `output/rest` and `output/mcp`: per country the read GIR model and document, the generated GIRs, the corrections and the read CbCR model, and `summary.json` with every step.
-
-Against the dev deployment of 2026-10-30 (simon-ai-labs/minimum-tax-api#27, commit e2c8f46), all 386 steps pass over REST and over MCP.
-
-## Quick Start
-
-### Prerequisites
-
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
-- Access to an Invoice Services API deployment
-- An `X-API-Key` for Marketplace deployments
-
-### Build
-
-```bash
-dotnet build examples.sln
-```
-
 ### Run both walkthroughs
 
 ```bash
@@ -78,18 +63,6 @@ dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- https://invoi
 ```
 
 Without `rest` or `mcp` as the first argument, the REST walkthrough runs first and the MCP walkthrough after it. Converted and rendered documents are written to `output/rest` and `output/mcp`.
-
-### Run the Minimum Tax walkthroughs
-
-```bash
-dotnet run --project minimum-api-calls/minimum-api-calls.csproj -- https://minimum-tax-api-dev.simon-ai-enterprise.de
-```
-
-As for the invoices, `rest` or `mcp` as the first argument runs one transport only, an API key can follow the URL, and the settings can come from `MINIMUM_TAX_API_BASE_URL` and `MINIMUM_TAX_API_KEY`:
-
-```bash
-dotnet run --project minimum-api-calls/minimum-api-calls.csproj -- mcp https://minimum-tax-api-dev.simon-ai-enterprise.de
-```
 
 ### Run the REST walkthrough
 
@@ -141,5 +114,85 @@ dotnet run --project invoice-api-calls/invoice-api-calls.csproj -- mcp
 The canonical invoice schema and supported target combinations are defined by
 the service's `/openapi/v1.json` and `/v1/capabilities` endpoints.
 
-Sample code notice: These examples are intentionally minimal and intended to demonstrate API integration. Production applications should add appropriate error handling, secret management, retries, logging and monitoring.
+</details>
 
+<details>
+<summary><strong>Minimum Tax API</strong> — <code>minimum-api-calls</code></summary>
+
+### Project
+
+**[minimum-api-calls](minimum-api-calls/)**: .NET console walkthrough for the Minimum Tax API over REST and MCP, built the same way as `invoice-api-calls`: requests come from the OpenAPI description behind `/docs` and from the MCP tools' input schemas, without request or response classes.
+
+- `MinimumTaxBusinessCases` runs every business endpoint for every country: it validates a positive, a technical (XSD) negative and a business-rule negative document for both GIR and CbCR, reads each GIR into the typed model and generates it again, answers each GIR with an accepting and a rejecting status message and reads them back, and reads each CbCR.
+- `MinimumTaxRestService` and `MinimumTaxMcpService` are the two transports; the test documents and their expected results are described in [minimum-api-calls/TestDocuments/README.md](minimum-api-calls/TestDocuments/README.md).
+
+### Build your own tool
+
+**[minimum-api-calls/vibe-coding-minimum-tax.md](minimum-api-calls/vibe-coding-minimum-tax.md)**: the same prompt for the Pillar Two & CbC Reporting Service (Minimum Tax API): checking, reading and generating GIRs, GIR status messages, and checking and reading CbC reports, with the test documents from `minimum-api-calls` as the reference results.
+
+### Test matrix
+
+For each of the 27 EU jurisdictions the service lists in `/v1/capabilities`, over REST and over MCP:
+
+| Business case | Endpoint · MCP tool | Expected result |
+|---|---|---|
+| Check a GIR | `POST /v1/gir/validate` · `validate_gir` | positive: valid and complete under `<CC>-GIR-2025-08`; XSD negative: `SCHEMA-ERR` (`xsd` layer); business negative: OECD rule `60020` |
+| Read and generate a GIR | `gir/read` · `read_gir` → `gir/generate` · `generate_gir` → `validate_gir` | the model names the UPE with its TIN; the generated GIR is valid and complete under the same national pack |
+| Read and generate the GIR document | `gir/read` · `read_gir` (`document`) → `gir/generate` · `generate_gir` → `validate_gir` | the document is the OECD payload in the schema's own structure; generated again it states exactly what the original stated and is valid and complete under the national pack |
+| Correct the filing | `read_gir` (`document`) → `generate_gir` (GIR102) → `validate_gir` with the filing history | FilingInfo resent as OECD0, every other record OECD2 with a new DocRefId in the national format; against the accepted first filing no pack finds anything, AT, IE, LU and PL withhold named rules that need records only the authority holds; a correction of a record never filed is refused |
+| Report the processing status | `gir/status-message/generate` · `generate_gir_status_message` → `gir/status-message/read` · `read_gir_status_message` | the positive is answered `Accepted`, the business negative `Rejected` with exactly the rule codes its validation found, and both read back unchanged |
+| Check a CbCR | `POST /v1/cbcr/validate` · `validate_cbcr` | positive: valid; XSD negative: `CBCR-SCHEMA-ERR`; business negative: `CBCR-SEM-002` |
+| Read a CbCR | `POST /v1/cbcr/read` · `read_cbcr` | valid, with the country as transmitting country |
+| Reject invalid input | `generate_gir`, `read_gir`, `read_cbcr`, `validate_cbcr` | an unknown country, currency or TIN type, a constituent entity without owners and a reported computation without its figures are refused with 422 naming the field; a CbCR sent to `gir/read` and a GIR sent to `cbcr/read` with 400; a CbCR total of 0 against non-zero parts is reported as `CBCR-SEM-004`. The service states no value the caller did not give. |
+
+Before the business cases, the REST walkthrough checks the operational endpoints `GET /health` and `GET /api/status`, which have no MCP tool. That makes 386 steps per transport: 81 GIR and 81 CbCR checks, 27 GIR reads, 27 regenerations, 27 document round trips, 54 corrections, 54 status messages, 27 CbCR reads and 8 refused inputs, plus the two operational endpoints over REST. A step that does not get its expected result is printed with its issues or the service's error, the run continues with the next country and exits with 1 at the end. Results go to `output/rest` and `output/mcp`: per country the read GIR model and document, the generated GIRs, the corrections and the read CbCR model, and `summary.json` with every step.
+
+Against the dev deployment of 2026-10-30 (simon-ai-labs/minimum-tax-api#27, commit e2c8f46), all 386 steps pass over REST and over MCP.
+
+### Run the walkthroughs
+
+```bash
+dotnet run --project minimum-api-calls/minimum-api-calls.csproj -- https://minimum-tax-api-dev.simon-ai-enterprise.de
+```
+
+As for the invoices, `rest` or `mcp` as the first argument runs one transport only, an API key can follow the URL, and the settings can come from `MINIMUM_TAX_API_BASE_URL` and `MINIMUM_TAX_API_KEY`:
+
+```bash
+dotnet run --project minimum-api-calls/minimum-api-calls.csproj -- mcp https://minimum-tax-api-dev.simon-ai-enterprise.de
+```
+
+</details>
+
+<details>
+<summary><strong>Filing Service</strong> — <code>filing-api-calls</code></summary>
+
+### Project
+
+**[filing-api-calls](filing-api-calls/)**: .NET console walkthrough for the Filing Service REST API with a synthetic UStVA 2026 filing. Details in [filing-api-calls/README.md](filing-api-calls/README.md).
+
+### Build your own tool
+
+**[filing-api-calls/vibe-coding.md](filing-api-calls/vibe-coding.md)**: the same prompt for the Filing Service: finding the route and contract of a filing type and year, checking and printing filings, and test transmissions to ELSTER that are sent only on purpose and never resent after an uncertain failure.
+
+### Business cases in the walkthrough
+
+| Step | Endpoint | What the walkthrough does |
+|---|---|---|
+| Check a filing | `POST /api/ustva/2026/validate` | Validates the bundled test filing; ELSTER accepts it with one hint (`11085154`, missing W-IdNr.). |
+| Reject an invalid filing | `POST /api/ustva/2026/validate` | Validates a variant with a four-digit postcode and prints the schema error (`FILING_SCHEMA_VIOLATION`). |
+| Print a filing | `POST /api/ustva/2026/preview` | Saves the official PDF as `ustva-2026-preview.pdf`. |
+| Test transmission | `POST /api/ustva/2026/filings` with `simulation: true` | Optional, only when a certificate is configured; prints the transfer ticket. Never retried automatically. |
+
+Other filing types and years work the same way under `/api/{datenart}/{stand}`; `/openapi/index.json` lists them all.
+
+### Run the walkthrough
+
+```bash
+dotnet run --project filing-api-calls/filing-api-calls.csproj -- https://filing-service-api.simon-ai-enterprise.de
+```
+
+An API key can follow the URL. The settings can also come from `FILING_API_BASE_URL`, `FILING_API_KEY`, `FILING_CERTIFICATE_PATH` and `FILING_CERTIFICATE_PIN`.
+
+</details>
+
+Sample code notice: These examples are intentionally minimal and intended to demonstrate API integration. Production applications should add appropriate error handling, secret management, retries, logging and monitoring.
