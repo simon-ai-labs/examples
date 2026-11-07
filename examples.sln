@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "invoice-api-calls", "invoic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "filing-api-calls", "filing-api-calls\filing-api-calls.csproj", "{511B3B9B-FD64-4850-B1D1-4B7284B2206E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "minimum-api-calls", "minimum-api-calls\minimum-api-calls.csproj", "{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{511B3B9B-FD64-4850-B1D1-4B7284B2206E}.Release|x64.Build.0 = Release|Any CPU
 		{511B3B9B-FD64-4850-B1D1-4B7284B2206E}.Release|x86.ActiveCfg = Release|Any CPU
 		{511B3B9B-FD64-4850-B1D1-4B7284B2206E}.Release|x86.Build.0 = Release|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Debug|x64.Build.0 = Debug|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Debug|x86.Build.0 = Debug|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Release|x64.ActiveCfg = Release|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Release|x64.Build.0 = Release|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Release|x86.ActiveCfg = Release|Any CPU
+		{5123DC21-A3A8-4A9C-AF7D-E63FCA90BE74}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Technical negative test for SE: positive.xml with an element the OECD GIR XML Schema does
+  not define (globe:Comment after NameMNE). The document is well-formed but schema-invalid.
+  Expected: isValid = false, rule SCHEMA-ERR from the xsd layer.
+-->
+<globe:GLOBE_OECD xmlns:globe="urn:oecd:ties:globe:v2"
+                  xmlns:iso="urn:oecd:ties:isoglobetypes:v1"
+                  xmlns:stf="urn:oecd:ties:globestf:v5"
+                  version="1.0">
+  <globe:MessageSpec>
+    <globe:SendingEntityIN>5678901234</globe:SendingEntityIN>
+    <globe:TransmittingCountry>SE</globe:TransmittingCountry>
+    <globe:ReceivingCountry>SE</globe:ReceivingCountry>
+    <globe:MessageType>GIR</globe:MessageType>
+    <globe:Contact>Svenska Bolaget AB, Anna Andersson, +46 8 123 456 00, anna.andersson@example.se</globe:Contact>
+    <globe:MessageRefId>SE2024-5678901234-GIR10001</globe:MessageRefId>
+    <globe:MessageTypeIndic>GIR101</globe:MessageTypeIndic>
+    <globe:ReportingPeriod>2024-12-31</globe:ReportingPeriod>
+    <globe:Timestamp>2024-12-31T23:59:59</globe:Timestamp>
+  </globe:MessageSpec>
+  <globe:GLOBEBody>
+    <globe:FilingInfo>
+      <globe:FilingCE>
+        <globe:ResCountryCode>SE</globe:ResCountryCode>
+        <globe:Name>Svenska Bolaget AB</globe:Name>
+        <globe:TIN TypeOfTIN="GIR3001" issuedBy="SE">5678901234</globe:TIN>
+        <globe:Role>GIR401</globe:Role>
+      </globe:FilingCE>
+      <globe:AccountingInfo>
+        <globe:CFSofUPE>GIR501</globe:CFSofUPE>
+        <globe:FAS>IFRS</globe:FAS>
+        <globe:Currency>SEK</globe:Currency>
+      </globe:AccountingInfo>
+      <globe:Period>
+        <globe:Start>2024-01-01</globe:Start>
+        <globe:End>2024-12-31</globe:End>
+      </globe:Period>
+      <globe:NameMNE>Swedish Enterprise Group</globe:NameMNE><globe:Comment>not in the schema</globe:Comment>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>SE20240293a461-09df-487f-ace4-d5c2dd2e75c4</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:FilingInfo>
+    <globe:GeneralSection>
+      <globe:RecJurCode>SE</globe:RecJurCode>
+      <globe:CorporateStructure>
+        <globe:UPE>
+          <globe:OtherUPE>
+            <globe:ID>
+              <globe:Name>Svenska Bolaget AB</globe:Name>
+              <globe:ResCountryCode>SE</globe:ResCountryCode>
+              <globe:TIN TypeOfTIN="GIR3001" issuedBy="SE">5678901234</globe:TIN>
+              <globe:Rules>GIR201</globe:Rules>
+              <globe:GlobeStatus>GIR301</globe:GlobeStatus>
+            </globe:ID>
+          </globe:OtherUPE>
+        </globe:UPE>
+      </globe:CorporateStructure>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>SE202449993936-7f7e-473b-9288-0ea026e6a1ad</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:GeneralSection>
+  </globe:GLOBEBody>
+</globe:GLOBE_OECD>

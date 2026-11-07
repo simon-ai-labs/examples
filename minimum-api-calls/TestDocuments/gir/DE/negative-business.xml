@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Business negative test for DE: positive.xml with FilingInfo/Period/End 2023-12-31, which no
+  longer matches MessageSpec/ReportingPeriod 2024-12-31. The document stays schema-valid.
+  Expected: isValid = false, OECD rule 60020.
+-->
+<globe:GLOBE_OECD xmlns:globe="urn:oecd:ties:globe:v2"
+                  xmlns:iso="urn:oecd:ties:isoglobetypes:v1"
+                  xmlns:stf="urn:oecd:ties:globestf:v5"
+                  version="1.0">
+  <globe:MessageSpec>
+    <globe:SendingEntityIN>2181508150123</globe:SendingEntityIN>
+    <globe:TransmittingCountry>DE</globe:TransmittingCountry>
+    <globe:ReceivingCountry>DE</globe:ReceivingCountry>
+    <globe:MessageType>GIR</globe:MessageType>
+    <globe:Contact>gir-filing@example-holding.de</globe:Contact>
+    <globe:MessageRefId>DE2024DE-a6057820-9195-406a-994c-b4213f7758e5</globe:MessageRefId>
+    <globe:MessageTypeIndic>GIR101</globe:MessageTypeIndic>
+    <globe:ReportingPeriod>2024-12-31</globe:ReportingPeriod>
+    <globe:Timestamp>2025-06-30T10:15:00</globe:Timestamp>
+  </globe:MessageSpec>
+  <globe:GLOBEBody>
+    <globe:FilingInfo>
+      <globe:FilingCE>
+        <globe:ResCountryCode>DE</globe:ResCountryCode>
+        <globe:Name>Example Holding DE</globe:Name>
+        <globe:TIN TypeOfTIN="GIR3001" issuedBy="DE">2181508150123</globe:TIN>
+        <globe:Role>GIR401</globe:Role>
+      </globe:FilingCE>
+      <globe:AccountingInfo>
+        <globe:CFSofUPE>GIR501</globe:CFSofUPE>
+        <globe:FAS>IFRS</globe:FAS>
+        <globe:Currency>EUR</globe:Currency>
+      </globe:AccountingInfo>
+      <globe:Period>
+        <globe:Start>2024-01-01</globe:Start>
+        <globe:End>2023-12-31</globe:End>
+      </globe:Period>
+      <globe:NameMNE>Example Group DE</globe:NameMNE>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>DE2024-7fb42a0f-1b74-46d4-97f7-a1c7fa5a7407</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:FilingInfo>
+    <globe:GeneralSection>
+      <globe:RecJurCode>DE</globe:RecJurCode>
+      <globe:CorporateStructure>
+        <globe:UPE>
+          <globe:OtherUPE>
+            <globe:ID>
+              <globe:Name>Example Holding DE</globe:Name>
+              <globe:ResCountryCode>DE</globe:ResCountryCode>
+              <globe:TIN TypeOfTIN="GIR3001" issuedBy="DE">2181508150123</globe:TIN>
+              <globe:Rules>GIR201</globe:Rules>
+              <globe:GlobeStatus>GIR301</globe:GlobeStatus>
+            </globe:ID>
+          </globe:OtherUPE>
+        </globe:UPE>
+      </globe:CorporateStructure>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>DE2024-97fbc1c1-ddae-418c-80b6-d64455d68ba6</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:GeneralSection>
+  </globe:GLOBEBody>
+</globe:GLOBE_OECD>

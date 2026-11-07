@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fictitious GloBE Information Return (GIR) for a national filing in BE. The group, names,
+  TINs and amounts are invented. Valid against the OECD GIR XML Schema, the OECD rules and the
+  BE national pack (BE-GIR-2025-08).
+  Expected: isValid = true, isComplete = true.
+-->
+<globe:GLOBE_OECD xmlns:globe="urn:oecd:ties:globe:v2"
+                  xmlns:iso="urn:oecd:ties:isoglobetypes:v1"
+                  xmlns:stf="urn:oecd:ties:globestf:v5"
+                  version="1.0">
+  <globe:MessageSpec>
+    <globe:TransmittingCountry>BE</globe:TransmittingCountry>
+    <globe:ReceivingCountry>BE</globe:ReceivingCountry>
+    <globe:MessageType>GIR</globe:MessageType>
+    <globe:MessageRefId>BE2024BE-0123456749-1234567890-GIR0000001</globe:MessageRefId>
+    <globe:MessageTypeIndic>GIR101</globe:MessageTypeIndic>
+    <globe:ReportingPeriod>2024-12-31</globe:ReportingPeriod>
+    <globe:Timestamp>2024-12-31T23:59:59</globe:Timestamp>
+  </globe:MessageSpec>
+  <globe:GLOBEBody>
+    <globe:FilingInfo>
+      <globe:FilingCE>
+        <globe:ResCountryCode>BE</globe:ResCountryCode>
+        <globe:Name>Belgian Enterprise N.V.</globe:Name>
+        <globe:TIN TypeOfTIN="GIR3001" issuedBy="BE">0123456749</globe:TIN>
+        <globe:Role>GIR401</globe:Role>
+      </globe:FilingCE>
+      <globe:AccountingInfo>
+        <globe:CFSofUPE>GIR501</globe:CFSofUPE>
+        <globe:FAS>IFRS</globe:FAS>
+        <globe:Currency>EUR</globe:Currency>
+      </globe:AccountingInfo>
+      <globe:Period>
+        <globe:Start>2024-01-01</globe:Start>
+        <globe:End>2024-12-31</globe:End>
+      </globe:Period>
+      <globe:NameMNE>Belgian Industrial Group</globe:NameMNE>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>BE2024-0123456749-1234567890-FI00000001</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:FilingInfo>
+    <globe:GeneralSection>
+      <globe:RecJurCode>BE</globe:RecJurCode>
+      <globe:CorporateStructure>
+        <globe:UPE>
+          <globe:OtherUPE>
+            <globe:ID>
+              <globe:Name>Belgian Enterprise N.V.</globe:Name>
+              <globe:ResCountryCode>BE</globe:ResCountryCode>
+              <globe:TIN TypeOfTIN="GIR3001" issuedBy="BE">0123456749</globe:TIN>
+              <globe:Rules>GIR201</globe:Rules>
+              <globe:GlobeStatus>GIR301</globe:GlobeStatus>
+            </globe:ID>
+          </globe:OtherUPE>
+        </globe:UPE>
+      </globe:CorporateStructure>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>BE2024-0123456749-1234567890-GS00000001</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:GeneralSection>
+  </globe:GLOBEBody>
+</globe:GLOBE_OECD>

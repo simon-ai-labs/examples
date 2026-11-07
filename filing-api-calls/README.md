@@ -14,8 +14,13 @@ Other Datenarten work the same way under `/api/{datenart}/{year}/...`; see `/doc
 ## Run
 
 ```bash
-dotnet run --project filing-api-calls/filing-api-calls.csproj -- http://localhost:8080 [API_KEY]
+dotnet run --project filing-api-calls/filing-api-calls.csproj -- https://filing-service-api.simon-ai-enterprise.de [API_KEY]
 ```
 
 Optional environment variables: `FILING_API_BASE_URL`, `FILING_API_KEY`,
 `FILING_CERTIFICATE_PATH` and `FILING_CERTIFICATE_PIN`.
+
+## Build your own tool
+
+[vibe-coding.md](vibe-coding.md) is a complete prompt for building your own tool on the Filing
+Service with an AI assistant. Copy the whole file into the AI chat and send it.

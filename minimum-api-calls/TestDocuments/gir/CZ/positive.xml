@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fictitious GloBE Information Return (GIR) for a national filing in CZ. The group, names,
+  TINs and amounts are invented. Valid against the OECD GIR XML Schema, the OECD rules and the
+  CZ national pack (CZ-GIR-2025-08).
+  Expected: isValid = true, isComplete = true.
+-->
+<globe:GLOBE_OECD xmlns:globe="urn:oecd:ties:globe:v2"
+                  xmlns:iso="urn:oecd:ties:isoglobetypes:v1"
+                  xmlns:stf="urn:oecd:ties:globestf:v5"
+                  version="1.0">
+  <globe:MessageSpec>
+    <globe:TransmittingCountry>CZ</globe:TransmittingCountry>
+    <globe:ReceivingCountry>CZ</globe:ReceivingCountry>
+    <globe:MessageType>GIR</globe:MessageType>
+    <globe:MessageRefId>CZ2024CZ79dad42a-3670-42a5-8f62-dcc0126fe3a6</globe:MessageRefId>
+    <globe:MessageTypeIndic>GIR101</globe:MessageTypeIndic>
+    <globe:ReportingPeriod>2024-12-31</globe:ReportingPeriod>
+    <globe:Timestamp>2024-12-31T23:59:59</globe:Timestamp>
+  </globe:MessageSpec>
+  <globe:GLOBEBody>
+    <globe:FilingInfo>
+      <globe:FilingCE>
+        <globe:ResCountryCode>CZ</globe:ResCountryCode>
+        <globe:Name>Česká Společnost a.s.</globe:Name>
+        <globe:TIN TypeOfTIN="GIR3001" issuedBy="CZ">00177041</globe:TIN>
+        <globe:Role>GIR401</globe:Role>
+      </globe:FilingCE>
+      <globe:AccountingInfo>
+        <globe:CFSofUPE>GIR501</globe:CFSofUPE>
+        <globe:FAS>IFRS</globe:FAS>
+        <globe:Currency>CZK</globe:Currency>
+      </globe:AccountingInfo>
+      <globe:Period>
+        <globe:Start>2024-01-01</globe:Start>
+        <globe:End>2024-12-31</globe:End>
+      </globe:Period>
+      <globe:NameMNE>Czech Enterprise Group</globe:NameMNE>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>CZ2024ca1d8269-5943-46c6-a3bd-d123ae4b9132</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:FilingInfo>
+    <globe:GeneralSection>
+      <globe:RecJurCode>CZ</globe:RecJurCode>
+      <globe:CorporateStructure>
+        <globe:UPE>
+          <globe:OtherUPE>
+            <globe:ID>
+              <globe:Name>Česká Společnost a.s.</globe:Name>
+              <globe:ResCountryCode>CZ</globe:ResCountryCode>
+              <globe:TIN TypeOfTIN="GIR3001" issuedBy="CZ">00177041</globe:TIN>
+              <globe:Rules>GIR201</globe:Rules>
+              <globe:GlobeStatus>GIR301</globe:GlobeStatus>
+            </globe:ID>
+          </globe:OtherUPE>
+        </globe:UPE>
+      </globe:CorporateStructure>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>CZ20245b0e7c1a-2f4d-4e8a-9c3b-7d6e5f4a3b2c</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:GeneralSection>
+  </globe:GLOBEBody>
+</globe:GLOBE_OECD>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Business negative test for CY: positive.xml with FilingInfo/Period/End 2023-12-31, which no
+  longer matches MessageSpec/ReportingPeriod 2024-12-31. The document stays schema-valid.
+  Expected: isValid = false, OECD rule 60020.
+-->
+<globe:GLOBE_OECD xmlns:globe="urn:oecd:ties:globe:v2"
+                  xmlns:iso="urn:oecd:ties:isoglobetypes:v1"
+                  xmlns:stf="urn:oecd:ties:globestf:v5"
+                  version="1.0">
+  <globe:MessageSpec>
+    <globe:TransmittingCountry>CY</globe:TransmittingCountry>
+    <globe:ReceivingCountry>CY</globe:ReceivingCountry>
+    <globe:MessageType>GIR</globe:MessageType>
+    <globe:MessageRefId>CY2024CYGIR00000001</globe:MessageRefId>
+    <globe:MessageTypeIndic>GIR101</globe:MessageTypeIndic>
+    <globe:ReportingPeriod>2024-12-31</globe:ReportingPeriod>
+    <globe:Timestamp>2024-12-31T23:59:59</globe:Timestamp>
+  </globe:MessageSpec>
+  <globe:GLOBEBody>
+    <globe:FilingInfo>
+      <globe:FilingCE>
+        <globe:ResCountryCode>CY</globe:ResCountryCode>
+        <globe:Name>Cyprus Holding Public Ltd</globe:Name>
+        <globe:TIN TypeOfTIN="GIR3001" issuedBy="CY">00123456H</globe:TIN>
+        <globe:Role>GIR401</globe:Role>
+      </globe:FilingCE>
+      <globe:AccountingInfo>
+        <globe:CFSofUPE>GIR501</globe:CFSofUPE>
+        <globe:FAS>IFRS</globe:FAS>
+        <globe:Currency>EUR</globe:Currency>
+      </globe:AccountingInfo>
+      <globe:Period>
+        <globe:Start>2024-01-01</globe:Start>
+        <globe:End>2023-12-31</globe:End>
+      </globe:Period>
+      <globe:NameMNE>Cyprus International Group</globe:NameMNE>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>CY2024bfa7f0e8-29d0-42fe-82de-a156123acf0e</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:FilingInfo>
+    <globe:GeneralSection>
+      <globe:RecJurCode>CY</globe:RecJurCode>
+      <globe:CorporateStructure>
+        <globe:UPE>
+          <globe:OtherUPE>
+            <globe:ID>
+              <globe:Name>Cyprus Holding Public Ltd</globe:Name>
+              <globe:ResCountryCode>CY</globe:ResCountryCode>
+              <globe:TIN TypeOfTIN="GIR3001" issuedBy="CY">00123456H</globe:TIN>
+              <globe:Rules>GIR201</globe:Rules>
+              <globe:GlobeStatus>GIR301</globe:GlobeStatus>
+            </globe:ID>
+          </globe:OtherUPE>
+        </globe:UPE>
+      </globe:CorporateStructure>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>CY202417846b6c-a19a-458d-842f-681a3bd09eb6</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:GeneralSection>
+  </globe:GLOBEBody>
+</globe:GLOBE_OECD>

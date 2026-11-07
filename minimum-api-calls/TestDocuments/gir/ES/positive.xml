@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fictitious GloBE Information Return (GIR) for a national filing in ES. The group, names,
+  TINs and amounts are invented. Valid against the OECD GIR XML Schema, the OECD rules and the
+  ES national pack (ES-GIR-2025-08).
+  Expected: isValid = true, isComplete = true.
+-->
+<globe:GLOBE_OECD xmlns:globe="urn:oecd:ties:globe:v2"
+                  xmlns:iso="urn:oecd:ties:isoglobetypes:v1"
+                  xmlns:stf="urn:oecd:ties:globestf:v5"
+                  version="1.0">
+  <globe:MessageSpec>
+    <globe:TransmittingCountry>ES</globe:TransmittingCountry>
+    <globe:ReceivingCountry>ES</globe:ReceivingCountry>
+    <globe:MessageType>GIR</globe:MessageType>
+    <globe:MessageRefId>ES2024ESGIR00000001</globe:MessageRefId>
+    <globe:MessageTypeIndic>GIR101</globe:MessageTypeIndic>
+    <globe:ReportingPeriod>2024-12-31</globe:ReportingPeriod>
+    <globe:Timestamp>2024-12-31T23:59:59</globe:Timestamp>
+  </globe:MessageSpec>
+  <globe:GLOBEBody>
+    <globe:FilingInfo>
+      <globe:FilingCE>
+        <globe:ResCountryCode>ES</globe:ResCountryCode>
+        <globe:Name>Sociedad Espanola S.A.</globe:Name>
+        <globe:TIN TypeOfTIN="GIR3001" issuedBy="ES">A58818501</globe:TIN>
+        <globe:Role>GIR401</globe:Role>
+      </globe:FilingCE>
+      <globe:AccountingInfo>
+        <globe:CFSofUPE>GIR501</globe:CFSofUPE>
+        <globe:FAS>IFRS</globe:FAS>
+        <globe:Currency>EUR</globe:Currency>
+      </globe:AccountingInfo>
+      <globe:Period>
+        <globe:Start>2024-01-01</globe:Start>
+        <globe:End>2024-12-31</globe:End>
+      </globe:Period>
+      <globe:NameMNE>Spanish Corporate Group</globe:NameMNE>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>ES2024A58818501FI0001</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:FilingInfo>
+    <globe:GeneralSection>
+      <globe:RecJurCode>ES</globe:RecJurCode>
+      <globe:CorporateStructure>
+        <globe:UPE>
+          <globe:OtherUPE>
+            <globe:ID>
+              <globe:Name>Sociedad Espanola S.A.</globe:Name>
+              <globe:ResCountryCode>ES</globe:ResCountryCode>
+              <globe:TIN TypeOfTIN="GIR3001" issuedBy="ES">A58818501</globe:TIN>
+              <globe:Rules>GIR201</globe:Rules>
+              <globe:GlobeStatus>GIR301</globe:GlobeStatus>
+            </globe:ID>
+          </globe:OtherUPE>
+        </globe:UPE>
+      </globe:CorporateStructure>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>ES2024A58818501GE0001</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:GeneralSection>
+  </globe:GLOBEBody>
+</globe:GLOBE_OECD>

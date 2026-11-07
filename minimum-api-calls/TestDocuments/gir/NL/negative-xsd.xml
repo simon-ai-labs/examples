@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Technical negative test for NL: positive.xml with an element the OECD GIR XML Schema does
+  not define (globe:Comment after NameMNE). The document is well-formed but schema-invalid.
+  Expected: isValid = false, rule SCHEMA-ERR from the xsd layer.
+-->
+<globe:GLOBE_OECD xmlns:globe="urn:oecd:ties:globe:v2"
+                  xmlns:iso="urn:oecd:ties:isoglobetypes:v1"
+                  xmlns:stf="urn:oecd:ties:globestf:v5"
+                  version="1.1">
+  <globe:MessageSpec>
+    <globe:TransmittingCountry>NL</globe:TransmittingCountry>
+    <globe:ReceivingCountry>NL</globe:ReceivingCountry>
+    <globe:MessageType>GIR</globe:MessageType>
+    <globe:MessageRefId>NL2024NL43459dda-00a5-4fca-9cb5-e59993369e4a</globe:MessageRefId>
+    <globe:MessageTypeIndic>GIR101</globe:MessageTypeIndic>
+    <globe:ReportingPeriod>2024-12-31</globe:ReportingPeriod>
+    <globe:Timestamp>2025-06-30T10:15:00</globe:Timestamp>
+  </globe:MessageSpec>
+  <globe:GLOBEBody>
+    <globe:FilingInfo>
+      <globe:FilingCE>
+        <globe:ResCountryCode>NL</globe:ResCountryCode>
+        <globe:Name>Example Holding NL</globe:Name>
+        <globe:TIN TypeOfTIN="GIR3001" issuedBy="NL">123456789</globe:TIN>
+        <globe:Role>GIR401</globe:Role>
+      </globe:FilingCE>
+      <globe:AccountingInfo>
+        <globe:CFSofUPE>GIR501</globe:CFSofUPE>
+        <globe:FAS>IFRS</globe:FAS>
+        <globe:Currency>EUR</globe:Currency>
+      </globe:AccountingInfo>
+      <globe:Period>
+        <globe:Start>2024-01-01</globe:Start>
+        <globe:End>2024-12-31</globe:End>
+      </globe:Period>
+      <globe:NameMNE>Example Group NL</globe:NameMNE><globe:Comment>not in the schema</globe:Comment>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>NL202417e27044-9c5b-42ed-8bd7-eb8389f83ffc</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:FilingInfo>
+    <globe:GeneralSection>
+      <globe:RecJurCode>NL</globe:RecJurCode>
+      <globe:CorporateStructure>
+        <globe:UPE>
+          <globe:OtherUPE>
+            <globe:ID>
+              <globe:Name>Example Holding NL</globe:Name>
+              <globe:ResCountryCode>NL</globe:ResCountryCode>
+              <globe:TIN TypeOfTIN="GIR3001" issuedBy="NL">123456789</globe:TIN>
+              <globe:Rules>GIR201</globe:Rules>
+              <globe:GlobeStatus>GIR301</globe:GlobeStatus>
+            </globe:ID>
+          </globe:OtherUPE>
+        </globe:UPE>
+      </globe:CorporateStructure>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>NL20247d242f3d-48fe-4590-bea5-d180629bd6c0</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:GeneralSection>
+  </globe:GLOBEBody>
+</globe:GLOBE_OECD>

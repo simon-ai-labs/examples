@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Technical negative test for LU: positive.xml with an element the OECD GIR XML Schema does
+  not define (globe:Comment after NameMNE). The document is well-formed but schema-invalid.
+  Expected: isValid = false, rule SCHEMA-ERR from the xsd layer.
+-->
+<globe:GLOBE_OECD xmlns:globe="urn:oecd:ties:globe:v2"
+                  xmlns:iso="urn:oecd:ties:isoglobetypes:v1"
+                  xmlns:stf="urn:oecd:ties:globestf:v5"
+                  version="1.0">
+  <globe:MessageSpec>
+    <globe:SendingEntityIN>20241234567</globe:SendingEntityIN>
+    <globe:TransmittingCountry>LU</globe:TransmittingCountry>
+    <globe:ReceivingCountry>LU</globe:ReceivingCountry>
+    <globe:MessageType>GIR</globe:MessageType>
+    <globe:MessageRefId>LU2024LU44390cc6-e237-4eb5-b0af-50fefbae6217</globe:MessageRefId>
+    <globe:MessageTypeIndic>GIR101</globe:MessageTypeIndic>
+    <globe:ReportingPeriod>2024-12-31</globe:ReportingPeriod>
+    <globe:Timestamp>2025-06-30T10:15:00</globe:Timestamp>
+  </globe:MessageSpec>
+  <globe:GLOBEBody>
+    <globe:FilingInfo>
+      <globe:FilingCE>
+        <globe:ResCountryCode>LU</globe:ResCountryCode>
+        <globe:Name>Example Holding LU</globe:Name>
+        <globe:TIN TypeOfTIN="GIR3001" issuedBy="LU">20241234567</globe:TIN>
+        <globe:Role>GIR401</globe:Role>
+      </globe:FilingCE>
+      <globe:AccountingInfo>
+        <globe:CFSofUPE>GIR501</globe:CFSofUPE>
+        <globe:FAS>IFRS</globe:FAS>
+        <globe:Currency>EUR</globe:Currency>
+      </globe:AccountingInfo>
+      <globe:Period>
+        <globe:Start>2024-01-01</globe:Start>
+        <globe:End>2024-12-31</globe:End>
+      </globe:Period>
+      <globe:NameMNE>Example Group LU</globe:NameMNE><globe:Comment>not in the schema</globe:Comment>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>LU202477332671-d23b-4097-bfe6-7e8dc7a7e6e2</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:FilingInfo>
+    <globe:GeneralSection>
+      <globe:RecJurCode>LU</globe:RecJurCode>
+      <globe:CorporateStructure>
+        <globe:UPE>
+          <globe:OtherUPE>
+            <globe:ID>
+              <globe:Name>Example Holding LU</globe:Name>
+              <globe:ResCountryCode>LU</globe:ResCountryCode>
+              <globe:TIN TypeOfTIN="GIR3001" issuedBy="LU">20241234567</globe:TIN>
+              <globe:Rules>GIR201</globe:Rules>
+              <globe:GlobeStatus>GIR301</globe:GlobeStatus>
+            </globe:ID>
+          </globe:OtherUPE>
+        </globe:UPE>
+      </globe:CorporateStructure>
+      <globe:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>LU2024d1b2521a-108f-4cf4-9e8f-d8b4ecb2b160</stf:DocRefId>
+      </globe:DocSpec>
+    </globe:GeneralSection>
+  </globe:GLOBEBody>
+</globe:GLOBE_OECD>
