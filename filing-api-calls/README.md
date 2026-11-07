@@ -1,6 +1,6 @@
 # filing-api-calls
 
-.NET console walkthrough for the Filing Service REST API, using the bundled
+.NET console walkthrough for the German Tax Filing Service REST API, using the bundled
 UStVA 2026 test filing:
 
 1. `POST /api/ustva/2026/validate` — validates the test filing.

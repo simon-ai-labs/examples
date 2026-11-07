@@ -6,7 +6,7 @@ using static InvoiceServices.Samples.Services.WalkthroughOutput;
 namespace InvoiceServices.Samples.Services;
 
 /// <summary>
-/// The business cases of the E-Invoicing Service, run identically over REST and MCP. Standard versions
+/// The business cases of the European &amp; German E-Invoicing Service, run identically over REST and MCP. Standard versions
 /// are taken from the capabilities at runtime, so the walkthrough follows the service's pinned versions.
 /// </summary>
 public sealed class InvoiceBusinessCases(IInvoiceTransport transport, string invoicePath, string? canonicalInvoiceJsonPath)

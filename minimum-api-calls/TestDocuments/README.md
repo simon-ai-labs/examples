@@ -1,6 +1,6 @@
 # Test documents per country
 
-Every EU jurisdiction the Minimum Tax API offers has three GIR and three CbCR documents:
+Every EU jurisdiction the Pillar Two & CbC Reporting Service offers has three GIR and three CbCR documents:
 
 | File | GIR (`gir/<CC>/`) | CbCR (`cbcr/<CC>/`) |
 |---|---|---|

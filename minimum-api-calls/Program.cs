@@ -7,7 +7,7 @@ var (baseUrl, apiKey) = ConfigurationHelper.ResolveConnectionSettings(mode is nu
 var documentsPath = Path.Combine(AppContext.BaseDirectory, "TestDocuments");
 var baseUri = new Uri(baseUrl.TrimEnd('/') + "/");
 
-Console.WriteLine($"Minimum Tax API: {baseUri} (docs: {new Uri(baseUri, "docs/")})");
+Console.WriteLine($"Pillar Two & CbC Reporting Service: {baseUri} (docs: {new Uri(baseUri, "docs/")})");
 if (string.IsNullOrWhiteSpace(apiKey))
 {
     Console.WriteLine("Notice: No MINIMUM_TAX_API_KEY supplied. A Marketplace deployment rejects unauthenticated requests.");
