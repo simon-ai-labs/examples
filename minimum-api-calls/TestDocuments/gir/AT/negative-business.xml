@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Business negative test for AT: positive.xml with FilingInfo/Period/End 2023-12-31, which no
+  longer matches MessageSpec/ReportingPeriod 2024-12-31. The document stays schema-valid.
+  Expected: isValid = false, OECD rule 60020.
+-->
+<glo_nat:GLOBE_NATIONAL xmlns:glo_nat="urn:oecd:ties:globe_national:v2"
+                        xmlns:globe="urn:oecd:ties:globe:v2"
+                        xmlns:iso="urn:oecd:ties:isoglobetypes:v1"
+                        xmlns:stf="urn:oecd:ties:globestf:v5">
+  <glo_nat:InfoDaten>
+    <glo_nat:FastnrFonTn>123456789</glo_nat:FastnrFonTn>
+    <glo_nat:FastnrOrg>123456789</glo_nat:FastnrOrg>
+  </glo_nat:InfoDaten>
+  <glo_nat:GLOBE_OECD version="1.0">
+    <glo_nat:MessageSpec>
+      <globe:SendingEntityIN>123456789</globe:SendingEntityIN>
+      <globe:TransmittingCountry>AT</globe:TransmittingCountry>
+      <globe:ReceivingCountry>AT</globe:ReceivingCountry>
+      <globe:MessageType>GIR</globe:MessageType>
+      <globe:MessageRefId>AT2024ATbafce1d5-7f92-4787-b204-80a5f8f91f0b</globe:MessageRefId>
+      <globe:MessageTypeIndic>GIR101</globe:MessageTypeIndic>
+      <globe:ReportingPeriod>2024-12-31</globe:ReportingPeriod>
+      <globe:Timestamp>2025-06-30T10:15:00</globe:Timestamp>
+    </glo_nat:MessageSpec>
+    <glo_nat:GLOBEBody>
+      <globe:FilingInfo>
+        <globe:FilingCE>
+          <globe:ResCountryCode>AT</globe:ResCountryCode>
+          <globe:Name>Example Holding AT</globe:Name>
+          <globe:TIN TypeOfTIN="GIR3001" issuedBy="AT">123456789</globe:TIN>
+          <globe:Role>GIR401</globe:Role>
+        </globe:FilingCE>
+        <globe:AccountingInfo>
+          <globe:CFSofUPE>GIR501</globe:CFSofUPE>
+          <globe:FAS>IFRS</globe:FAS>
+          <globe:Currency>EUR</globe:Currency>
+        </globe:AccountingInfo>
+        <globe:Period>
+          <globe:Start>2024-01-01</globe:Start>
+          <globe:End>2023-12-31</globe:End>
+        </globe:Period>
+        <globe:NameMNE>Example Group AT</globe:NameMNE>
+        <globe:DocSpec>
+          <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+          <stf:DocRefId>AT2024f12ad2f5-fe59-4d2b-a2a9-c6c806b160fc</stf:DocRefId>
+        </globe:DocSpec>
+      </globe:FilingInfo>
+      <globe:GeneralSection>
+        <globe:RecJurCode>AT</globe:RecJurCode>
+        <globe:CorporateStructure>
+          <globe:UPE>
+            <globe:OtherUPE>
+              <globe:ID>
+                <globe:Name>Example Holding AT</globe:Name>
+                <globe:ResCountryCode>AT</globe:ResCountryCode>
+                <globe:TIN TypeOfTIN="GIR3001" issuedBy="AT">123456789</globe:TIN>
+                <globe:Rules>GIR201</globe:Rules>
+                <globe:GlobeStatus>GIR301</globe:GlobeStatus>
+              </globe:ID>
+            </globe:OtherUPE>
+          </globe:UPE>
+        </globe:CorporateStructure>
+        <globe:DocSpec>
+          <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+          <stf:DocRefId>AT2024496f94c2-7699-45bd-a9fd-f1217aecbff6</stf:DocRefId>
+        </globe:DocSpec>
+      </globe:GeneralSection>
+    </glo_nat:GLOBEBody>
+  </glo_nat:GLOBE_OECD>
+</glo_nat:GLOBE_NATIONAL>

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Business negative test for CZ: positive.xml with a Reporting Entity name of three spaces.
+  The schema accepts it (minLength 1, whitespace preserved), the consistency check does not.
+  Expected: isValid = false, code CBCR-SEM-002.
+-->
+<cbc:CBC_OECD xmlns:cbc="urn:oecd:ties:cbc:v2"
+              xmlns:stf="urn:oecd:ties:cbcstf:v5"
+              xmlns:iso="urn:oecd:ties:isocbctypes:v1"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              version="2.0">
+  <cbc:MessageSpec>
+    <cbc:SendingEntityIN>CZ123456789</cbc:SendingEntityIN>
+    <cbc:TransmittingCountry>CZ</cbc:TransmittingCountry>
+    <cbc:ReceivingCountry>CZ</cbc:ReceivingCountry>
+    <cbc:MessageType>CBC</cbc:MessageType>
+    <cbc:Language>EN</cbc:Language>
+    <cbc:Warning>Test CbCR Filing</cbc:Warning>
+    <cbc:Contact>tax@globalgroup.com</cbc:Contact>
+    <cbc:MessageRefId>CZ2026-CBC-MSG-001</cbc:MessageRefId>
+    <cbc:MessageTypeIndic>CBC401</cbc:MessageTypeIndic>
+    <cbc:ReportingPeriod>2026-12-31</cbc:ReportingPeriod>
+    <cbc:Timestamp>2026-05-01T12:00:00Z</cbc:Timestamp>
+  </cbc:MessageSpec>
+  <cbc:CbcBody>
+    <cbc:ReportingEntity>
+      <cbc:Entity>
+        <cbc:ResCountryCode>CZ</cbc:ResCountryCode>
+        <cbc:TIN issuedBy="CZ">CZ123456789</cbc:TIN>
+        <cbc:Name>   </cbc:Name>
+        <cbc:Address>
+          <cbc:CountryCode>CZ</cbc:CountryCode>
+          <cbc:AddressFix>
+            <cbc:Street>Example Street 1</cbc:Street>
+            <cbc:PostCode>10001</cbc:PostCode>
+            <cbc:City>Capital City</cbc:City>
+          </cbc:AddressFix>
+        </cbc:Address>
+      </cbc:Entity>
+      <cbc:NameMNEGroup>Global Group</cbc:NameMNEGroup>
+      <cbc:ReportingRole>CBC701</cbc:ReportingRole>
+      <cbc:ReportingPeriod>
+        <cbc:StartDate>2026-01-01</cbc:StartDate>
+        <cbc:EndDate>2026-12-31</cbc:EndDate>
+      </cbc:ReportingPeriod>
+      <cbc:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>CZ2026-DOC-REP-001</stf:DocRefId>
+      </cbc:DocSpec>
+    </cbc:ReportingEntity>
+    <cbc:CbcReports>
+      <cbc:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>CZ2026-REP-CZ-001</stf:DocRefId>
+      </cbc:DocSpec>
+      <cbc:ResCountryCode>CZ</cbc:ResCountryCode>
+      <cbc:Summary>
+        <cbc:Revenues>
+          <cbc:Unrelated currCode="CZK">800000000</cbc:Unrelated>
+          <cbc:Related currCode="CZK">100000000</cbc:Related>
+          <cbc:Total currCode="CZK">900000000</cbc:Total>
+        </cbc:Revenues>
+        <cbc:ProfitOrLoss currCode="CZK">150000000</cbc:ProfitOrLoss>
+        <cbc:TaxPaid currCode="CZK">40000000</cbc:TaxPaid>
+        <cbc:TaxAccrued currCode="CZK">42000000</cbc:TaxAccrued>
+        <cbc:Capital currCode="CZK">500000000</cbc:Capital>
+        <cbc:Earnings currCode="CZK">300000000</cbc:Earnings>
+        <cbc:NbEmployees>5000</cbc:NbEmployees>
+        <cbc:Assets currCode="CZK">1200000000</cbc:Assets>
+      </cbc:Summary>
+      <cbc:ConstEntities>
+        <cbc:ConstEntity>
+          <cbc:ResCountryCode>CZ</cbc:ResCountryCode>
+          <cbc:TIN issuedBy="CZ">CZ123456789</cbc:TIN>
+          <cbc:Name>Global Holdings CZ</cbc:Name>
+          <cbc:Address>
+            <cbc:CountryCode>CZ</cbc:CountryCode>
+            <cbc:AddressFix>
+              <cbc:Street>Example Street 1</cbc:Street>
+              <cbc:PostCode>10001</cbc:PostCode>
+              <cbc:City>Capital City</cbc:City>
+            </cbc:AddressFix>
+          </cbc:Address>
+        </cbc:ConstEntity>
+        <cbc:Role>CBC801</cbc:Role>
+        <cbc:IncorpCountryCode>CZ</cbc:IncorpCountryCode>
+        <cbc:BizActivities>CBC501</cbc:BizActivities>
+      </cbc:ConstEntities>
+    </cbc:CbcReports>
+    <cbc:CbcReports>
+      <cbc:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>CZ2026-REP-NL-001</stf:DocRefId>
+      </cbc:DocSpec>
+      <cbc:ResCountryCode>NL</cbc:ResCountryCode>
+      <cbc:Summary>
+        <cbc:Revenues>
+          <cbc:Unrelated currCode="CZK">5000000</cbc:Unrelated>
+          <cbc:Related currCode="CZK">2000000</cbc:Related>
+          <cbc:Total currCode="CZK">7000000</cbc:Total>
+        </cbc:Revenues>
+        <cbc:ProfitOrLoss currCode="CZK">500000</cbc:ProfitOrLoss>
+        <cbc:TaxPaid currCode="CZK">100000</cbc:TaxPaid>
+        <cbc:TaxAccrued currCode="CZK">120000</cbc:TaxAccrued>
+        <cbc:Capital currCode="CZK">10000000</cbc:Capital>
+        <cbc:Earnings currCode="CZK">5000000</cbc:Earnings>
+        <cbc:NbEmployees>10</cbc:NbEmployees>
+        <cbc:Assets currCode="CZK">20000000</cbc:Assets>
+      </cbc:Summary>
+      <cbc:ConstEntities>
+        <cbc:ConstEntity>
+          <cbc:ResCountryCode>NL</cbc:ResCountryCode>
+          <cbc:TIN issuedBy="NL">NL987654321</cbc:TIN>
+          <cbc:Name>Global Subsidiary NL</cbc:Name>
+          <cbc:Address>
+            <cbc:CountryCode>NL</cbc:CountryCode>
+            <cbc:AddressFix>
+              <cbc:Street>Example Street 2</cbc:Street>
+              <cbc:PostCode>10002</cbc:PostCode>
+              <cbc:City>Partner City</cbc:City>
+            </cbc:AddressFix>
+          </cbc:Address>
+        </cbc:ConstEntity>
+        <cbc:IncorpCountryCode>NL</cbc:IncorpCountryCode>
+        <cbc:BizActivities>CBC502</cbc:BizActivities>
+      </cbc:ConstEntities>
+    </cbc:CbcReports>
+    <cbc:AdditionalInfo>
+      <cbc:DocSpec>
+        <stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+        <stf:DocRefId>CZ2026-ADD-001</stf:DocRefId>
+      </cbc:DocSpec>
+      <cbc:OtherInfo>Qualified Financial Statements (QFS) derived from consolidated financial statements under IFRS with consistent data source usage and audited reporting package.</cbc:OtherInfo>
+      <cbc:ResCountryCode>CZ</cbc:ResCountryCode>
+      <cbc:ResCountryCode>NL</cbc:ResCountryCode>
+    </cbc:AdditionalInfo>
+  </cbc:CbcBody>
+</cbc:CBC_OECD>
