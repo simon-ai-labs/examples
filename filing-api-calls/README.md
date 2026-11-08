@@ -77,7 +77,13 @@ dotnet run --project filing-api-calls/filing-api-calls.csproj -- perf https://fi
 
 The first argument may be `rest`, `mcp` or `perf`; without it the REST and MCP walkthroughs run. Settings
 come from the environment, User Secrets or a `.env` file: `FILING_API_BASE_URL`, `FILING_API_KEY`,
-`FILING_SIMULATE`, `FILING_TEST_CERTIFICATE` and the `FILING_PERF_*` values above.
+`FILING_SIMULATE`, `FILING_TEST_CERTIFICATE`, `FILING_EXCLUDE`, `FILING_SIMULATE_EXCLUDE` and the `FILING_PERF_*`
+values above.
+
+`FILING_EXCLUDE` (comma-separated Datenarten, `none` for all) leaves Datenarten out of the walkthrough; by default
+`/api/vno-vmv-loeschung` is left out for now, so a run checks 146 Datenarten over REST and 135 over MCP.
+`FILING_SIMULATE_EXCLUDE` keeps Datenarten out of the simulation only: by default the Vollmacht, DIVA and
+Dauerpostbestand Datenarten, which ELSTER refuses with the ERiC test certificate (return code 610101210).
 
 ## Build your own tool
 

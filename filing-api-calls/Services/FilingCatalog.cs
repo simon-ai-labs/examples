@@ -72,9 +72,16 @@ public static partial class FilingCatalog
                 route.Select(entry => entry.Operation).ToList()));
     }
 
-    /// <summary>Keeps one Stand per Datenart, the one with the highest version.</summary>
+    /// <summary>Datenarten (routes without their version, such as <c>/api/vno-vmv-loeschung</c>) that are left out.</summary>
+    public static IReadOnlySet<string> Excluded { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Datenarten that are checked but never sent as a simulation to ELSTER.</summary>
+    public static IReadOnlySet<string> NotSimulated { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Keeps one Stand per Datenart, the one with the highest version, except the <see cref="Excluded"/> ones.</summary>
     public static IReadOnlyList<FilingStand> Latest(IEnumerable<FilingStand> stands) =>
-        stands.GroupBy(stand => stand.Datenart)
+        stands.Where(stand => !Excluded.Contains(stand.Datenart))
+            .GroupBy(stand => stand.Datenart)
             .Select(group => group.MaxBy(stand => stand.Version, VersionComparer.Instance)!)
             .OrderBy(stand => stand.Datenart, StringComparer.Ordinal)
             .ToList();

@@ -13,7 +13,28 @@ var testCertificate = ConfigurationHelper.GetSetting("FILING_SIMULATE") is "true
     ? ConfigurationHelper.GetSetting("FILING_TEST_CERTIFICATE") ?? "organisation"
     : null;
 
+// FILING_EXCLUDE lists Datenarten to leave out, comma-separated; "none" runs all of them. VNoVMVLoeschung is
+// left out for now.
+FilingCatalog.Excluded = ParseDatenarten(ConfigurationHelper.GetSetting("FILING_EXCLUDE") ?? "/api/vno-vmv-loeschung");
+
+// FILING_SIMULATE_EXCLUDE lists Datenarten that are checked but not sent as a simulation; "none" sends all of
+// them. The Vollmacht, DIVA and Dauerpostbestand Datenarten are refused by ELSTER with the ERiC test certificate
+// (return code 610101210), so they are left out of the simulation for now.
+FilingCatalog.NotSimulated = ParseDatenarten(ConfigurationHelper.GetSetting("FILING_SIMULATE_EXCLUDE")
+    ?? "/api/abrufvollmacht-anlage,/api/dauerpostbestantrag,/api/diva-einwilligung-anlage-brm,/api/diva-einwilligung-freisch,"
+     + "/api/diva-einwilligung-update-brm,/api/diva-ergebnisliste,/api/diva-widerruf-brm,/api/lsthv-diva-adresse-brm,"
+     + "/api/lsthvvm-anlage,/api/lsthvvm-update");
+
 Console.WriteLine($"Filing Service: {baseUri} (docs: {new Uri(baseUri, "docs/")})");
+if (FilingCatalog.Excluded.Count > 0)
+{
+    Console.WriteLine($"Left out: {string.Join(", ", FilingCatalog.Excluded)} (FILING_EXCLUDE)");
+}
+
+if (testCertificate is not null && FilingCatalog.NotSimulated.Count > 0)
+{
+    Console.WriteLine($"Not simulated: {string.Join(", ", FilingCatalog.NotSimulated)} (FILING_SIMULATE_EXCLUDE)");
+}
 if (string.IsNullOrWhiteSpace(apiKey))
 {
     Console.WriteLine("Notice: No FILING_API_KEY supplied. A Marketplace deployment rejects unauthenticated requests.");
@@ -60,3 +81,8 @@ catch (Exception ex)
 
 static void Title(string title) =>
     WalkthroughOutput.Write(ConsoleColor.White, $"\n==================== {title} ====================");
+
+static HashSet<string> ParseDatenarten(string value) =>
+    value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Where(datenart => !datenart.Equals("none", StringComparison.OrdinalIgnoreCase))
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);

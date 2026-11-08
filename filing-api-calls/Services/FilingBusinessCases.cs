@@ -99,7 +99,7 @@ public sealed class FilingBusinessCases(IFilingTransport transport, string refer
                     body.AsObject().Remove("certificate");
                     await ExpectAsync(stand, operation, "without-certificate", body, "400", response => response.Status == 400);
 
-                    if (operation.Name == "filings" && testCertificate is not null)
+                    if (operation.Name == "filings" && testCertificate is not null && !FilingCatalog.NotSimulated.Contains(stand.Datenart))
                     {
                         var simulation = operation.Examples[0].Body.DeepClone().AsObject();
                         simulation["simulation"] = true;

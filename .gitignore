@@ -15,3 +15,11 @@ obj/
 output/
 # The filing walkthrough keeps its recorded runs against production.
 !filing-api-calls/output/
+
+# Certificates and private keys — never commit them; the simulation uses the service's own ERiC test certificate
+*.pfx
+*.p12
+*.pem
+*.key
+*.cer
+*.crt
