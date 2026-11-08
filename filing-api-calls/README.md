@@ -47,10 +47,17 @@ ten requests per worker, after one warm-up call. Every answer must be `200` with
 percentile must stay below 2 s. It prints requests per second and p50/p95/p99/max per level and writes
 `output/perf/summary.json`. Nothing is transmitted.
 
-Against production on 2026-11-08 every level passed: `validate` 15 → 109 requests/s from concurrency 1 to
-50 (p95 116 → 637 ms), `preview` 13 → 58 requests/s (p95 106 ms → 1.6 s). Cloud Run scales out above about
-25 concurrent requests; the first call of a large form on a fresh instance takes several seconds (EStE
-2025 up to 13 s) while ERiC loads its plugin.
+Two runs against production on 2026-11-08:
+
+| Run | Level | validate | preview |
+|---|---|---|---|
+| 1 (warm instances) | c=1 / c=50 | 15 / 109 req/s, p95 116 / 637 ms | 13 / 58 req/s, p95 106 ms / 1.6 s |
+| 2 (`output/perf/summary.json`) | c=1 / c=50 | 11 / 15 req/s, p95 103 ms / **31.8 s** ✘ | 10 / 29 req/s, p95 113 ms / **2.2 s** ✘ |
+
+Every request was answered with `200` and `error: false`, so no request failed. In run 2, a few calls at c=50
+waited about 30 s for a new Cloud Run instance to load ERiC; up to c=25 both runs stayed below the limit.
+The first call of a large form on a fresh instance also takes several seconds (EStE 2025 up to 13 s).
+Minimum instances or a faster ERiC start would remove the cold-start tail.
 
 | Setting | Default |
 |---|---|

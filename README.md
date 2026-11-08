@@ -187,7 +187,7 @@ For the latest Stand of every Datenart (147 over REST, 136 over MCP, which has n
 | Nothing is sent without credentials | `filings`, `decode`, Abfrage and SpezRecht routes without `certificate` | `400` before anything reaches ELSTER. |
 | Test transmission | `filings` · `simulate_filing` with `simulation: true` | Optional (`FILING_SIMULATE=true`), signed with the ERiC test certificate of the service. Never retried automatically. |
 
-Against the production deployment of 2026-11-08 (simon-ai-labs/filing-service-api#265, commit 16de955) all 543 steps pass over REST and all 529 over MCP. The performance test passes: validate reaches about 110 requests/s at concurrency 50 with p95 640 ms, preview about 58 requests/s with p95 1.6 s.
+Against the production deployment of 2026-11-08 (simon-ai-labs/filing-service-api#265, commit 16de955) all 543 steps pass over REST and all 529 over MCP. The performance test answers every request correctly and stays below its 2 s p95 limit up to concurrency 25. At concurrency 50 it passed in one run (validate 109 requests/s, p95 640 ms) and failed in the second one: validate p95 31.8 s and preview p95 2.2 s, while new Cloud Run instances loaded ERiC. The recorded runs are under [filing-api-calls/output](filing-api-calls/output/).
 
 ### Run the walkthrough
 
