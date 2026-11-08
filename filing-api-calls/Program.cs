@@ -19,11 +19,14 @@ FilingCatalog.Excluded = ParseDatenarten(ConfigurationHelper.GetSetting("FILING_
 
 // FILING_SIMULATE_EXCLUDE lists Datenarten that are checked but not sent as a simulation; "none" sends all of
 // them. The Vollmacht, DIVA and Dauerpostbestand Datenarten are refused by ELSTER with the ERiC test certificate
-// (return code 610101210), so they are left out of the simulation for now.
+// (return code 610101210; vm-widerruf, vno-vmv-registrierung and vollmacht-details 610101292), so they are left
+// out of the simulation for now.
 FilingCatalog.NotSimulated = ParseDatenarten(ConfigurationHelper.GetSetting("FILING_SIMULATE_EXCLUDE")
     ?? "/api/abrufvollmacht-anlage,/api/dauerpostbestantrag,/api/diva-einwilligung-anlage-brm,/api/diva-einwilligung-freisch,"
      + "/api/diva-einwilligung-update-brm,/api/diva-ergebnisliste,/api/diva-widerruf-brm,/api/lsthv-diva-adresse-brm,"
-     + "/api/lsthvvm-anlage,/api/lsthvvm-update");
+     + "/api/lsthvvm-anlage,/api/lsthvvm-update,/api/vm-ergebnis-liste-vn-sicht,/api/vm-widerruf,"
+     + "/api/vmo-vmv-freischaltung,/api/vmo-vmv-stb-anlage,/api/vmo-vmv-stb-update,/api/vno-vmv-registrierung,"
+     + "/api/vno-vmv-update,/api/vollfa-anlage,/api/vollfa-update,/api/vollmacht-details");
 
 Console.WriteLine($"Filing Service: {baseUri} (docs: {new Uri(baseUri, "docs/")})");
 if (FilingCatalog.Excluded.Count > 0)

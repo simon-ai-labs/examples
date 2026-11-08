@@ -83,7 +83,8 @@ values above.
 `FILING_EXCLUDE` (comma-separated Datenarten, `none` for all) leaves Datenarten out of the walkthrough; by default
 `/api/vno-vmv-loeschung` is left out for now, so a run checks 146 Datenarten over REST and 135 over MCP.
 `FILING_SIMULATE_EXCLUDE` keeps Datenarten out of the simulation only: by default the Vollmacht, DIVA and
-Dauerpostbestand Datenarten, which ELSTER refuses with the ERiC test certificate (return code 610101210).
+Dauerpostbestand Datenarten (20 of them), which ELSTER refuses with the ERiC test certificate (return code
+610101210, for `vm-widerruf`, `vno-vmv-registrierung` and `vollmacht-details` 610101292).
 
 ## Build your own tool
 
