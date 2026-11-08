@@ -1,0 +1,152 @@
+[
+  {
+    "Path": "api/ustva/2026/validate",
+    "Concurrency": 1,
+    "Requests": 10,
+    "Ok": 10,
+    "RequestsPerSecond": 11,
+    "P50Ms": 92,
+    "P95Ms": 103,
+    "P99Ms": 103,
+    "MaxMs": 103,
+    "Statuses": {
+      "200": 10
+    },
+    "Passed": true
+  },
+  {
+    "Path": "api/ustva/2026/validate",
+    "Concurrency": 5,
+    "Requests": 50,
+    "Ok": 50,
+    "RequestsPerSecond": 27.9,
+    "P50Ms": 158,
+    "P95Ms": 266,
+    "P99Ms": 352,
+    "MaxMs": 352,
+    "Statuses": {
+      "200": 50
+    },
+    "Passed": true
+  },
+  {
+    "Path": "api/ustva/2026/validate",
+    "Concurrency": 10,
+    "Requests": 100,
+    "Ok": 100,
+    "RequestsPerSecond": 45.2,
+    "P50Ms": 194,
+    "P95Ms": 404,
+    "P99Ms": 476,
+    "MaxMs": 476,
+    "Statuses": {
+      "200": 100
+    },
+    "Passed": true
+  },
+  {
+    "Path": "api/ustva/2026/validate",
+    "Concurrency": 25,
+    "Requests": 250,
+    "Ok": 250,
+    "RequestsPerSecond": 58.6,
+    "P50Ms": 424,
+    "P95Ms": 726,
+    "P99Ms": 765,
+    "MaxMs": 768,
+    "Statuses": {
+      "200": 250
+    },
+    "Passed": true
+  },
+  {
+    "Path": "api/ustva/2026/validate",
+    "Concurrency": 50,
+    "Requests": 500,
+    "Ok": 500,
+    "RequestsPerSecond": 14.9,
+    "P50Ms": 376,
+    "P95Ms": 31847,
+    "P99Ms": 33415,
+    "MaxMs": 33467,
+    "Statuses": {
+      "200": 500
+    },
+    "Passed": false
+  },
+  {
+    "Path": "api/ustva/2026/preview",
+    "Concurrency": 1,
+    "Requests": 10,
+    "Ok": 10,
+    "RequestsPerSecond": 10,
+    "P50Ms": 100,
+    "P95Ms": 113,
+    "P99Ms": 113,
+    "MaxMs": 113,
+    "Statuses": {
+      "200": 10
+    },
+    "Passed": true
+  },
+  {
+    "Path": "api/ustva/2026/preview",
+    "Concurrency": 5,
+    "Requests": 50,
+    "Ok": 50,
+    "RequestsPerSecond": 37.3,
+    "P50Ms": 122,
+    "P95Ms": 173,
+    "P99Ms": 177,
+    "MaxMs": 177,
+    "Statuses": {
+      "200": 50
+    },
+    "Passed": true
+  },
+  {
+    "Path": "api/ustva/2026/preview",
+    "Concurrency": 10,
+    "Requests": 100,
+    "Ok": 100,
+    "RequestsPerSecond": 36.8,
+    "P50Ms": 247,
+    "P95Ms": 410,
+    "P99Ms": 494,
+    "MaxMs": 494,
+    "Statuses": {
+      "200": 100
+    },
+    "Passed": true
+  },
+  {
+    "Path": "api/ustva/2026/preview",
+    "Concurrency": 25,
+    "Requests": 250,
+    "Ok": 250,
+    "RequestsPerSecond": 29.1,
+    "P50Ms": 731,
+    "P95Ms": 1277,
+    "P99Ms": 1427,
+    "MaxMs": 1432,
+    "Statuses": {
+      "200": 250
+    },
+    "Passed": true
+  },
+  {
+    "Path": "api/ustva/2026/preview",
+    "Concurrency": 50,
+    "Requests": 500,
+    "Ok": 500,
+    "RequestsPerSecond": 28.8,
+    "P50Ms": 1724,
+    "P95Ms": 2201,
+    "P99Ms": 2261,
+    "MaxMs": 2301,
+    "Statuses": {
+      "200": 500
+    },
+    "Passed": false
+  }
+]

@@ -13,3 +13,5 @@ obj/
 
 # Walkthrough output
 output/
+# The filing walkthrough keeps its recorded runs against production.
+!filing-api-calls/output/
