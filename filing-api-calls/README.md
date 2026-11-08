@@ -34,15 +34,11 @@ problem, the run continues and exits with 1 at the end. Every step, with its sta
 
 | Transport | Datenarten | Steps | Passed | Failed |
 |---|---|---|---|---|
-| REST | 147 | 543 | 449 | 94 |
-| MCP | 136 | 529 | 435 | 94 |
+| REST | 147 | 543 | 543 | 0 |
+| MCP | 136 | 529 | 529 | 0 |
 
-Every failure is a contract example that ERiC rejects. In 86 of them the tax number is `1096099999999`,
-whose check digit is wrong (`ungueltigeSteuernummer`); the bundled reference filing with `1096081508187`
-is valid. The other eight are incomplete examples: Einspruch Nachtrag and Rücknahme (`210015018`ff.),
-FEIN Beteiligte (`9900001`ff.), Grundsteuer HH (`10010`) and E-Bilanz 6.9 (`170105000`). Nothing failed in
-the transport itself: every refusal case answered `400`, and no step got a `5xx`. The run exits with 1
-until the service publishes valid examples.
+Deployment of simon-ai-labs/filing-service-api#265 (commit 16de955), whose contract examples are checked
+against the real ERiC.
 
 ## Performance test
 
