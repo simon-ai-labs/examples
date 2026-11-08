@@ -31,12 +31,13 @@ public sealed class FilingMcpService(McpClient client) : IFilingTransport
             headers["X-API-Key"] = apiKey;
         }
 
+        // The contracts of the large forms take long on a cold instance; HttpClient's default of 100 s is too short.
         var client = await McpClient.CreateAsync(new HttpClientTransport(new HttpClientTransportOptions
         {
             Endpoint = endpoint,
             TransportMode = HttpTransportMode.StreamableHttp,
             AdditionalHeaders = headers
-        }));
+        }, new HttpClient { Timeout = TimeSpan.FromMinutes(10) }, ownsHttpClient: true));
         foreach (var tool in await client.ListToolsAsync())
         {
             Console.WriteLine($"  - {tool.Name}");

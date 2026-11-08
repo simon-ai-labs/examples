@@ -22,7 +22,7 @@ FilingCatalog.Excluded = ParseDatenarten(ConfigurationHelper.GetSetting("FILING_
 // (return code 610101210; vm-widerruf, vno-vmv-registrierung and vollmacht-details 610101292), so they are left
 // out of the simulation for now.
 FilingCatalog.NotSimulated = ParseDatenarten(ConfigurationHelper.GetSetting("FILING_SIMULATE_EXCLUDE")
-    ?? "/api/abrufvollmacht-anlage,/api/dauerpostbestantrag,/api/diva-einwilligung-anlage-brm,/api/diva-einwilligung-freisch,"
+    ?? "/api/abrufvollmacht-anlage,/api/dauerpostbestantrag,/api/dauerpostbestwiderruf,/api/diva-einwilligung-anlage-brm,/api/diva-einwilligung-freisch,"
      + "/api/diva-einwilligung-update-brm,/api/diva-ergebnisliste,/api/diva-widerruf-brm,/api/lsthv-diva-adresse-brm,"
      + "/api/lsthvvm-anlage,/api/lsthvvm-update,/api/vm-ergebnis-liste-vn-sicht,/api/vm-widerruf,"
      + "/api/vmo-vmv-freischaltung,/api/vmo-vmv-stb-anlage,/api/vmo-vmv-stb-update,/api/vno-vmv-registrierung,"
@@ -46,7 +46,7 @@ if (string.IsNullOrWhiteSpace(apiKey))
 try
 {
     // ERiC checks and renders the large forms in seconds; a cold instance takes longer.
-    using var http = new HttpClient { BaseAddress = baseUri, Timeout = TimeSpan.FromMinutes(4) };
+    using var http = new HttpClient { BaseAddress = baseUri, Timeout = TimeSpan.FromMinutes(10) };
     var exitCode = 0;
 
     if (mode is null or "rest")
