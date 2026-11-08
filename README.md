@@ -168,7 +168,7 @@ dotnet run --project minimum-api-calls/minimum-api-calls.csproj -- mcp https://m
 
 ### Project
 
-**[filing-api-calls](filing-api-calls/)**: .NET console walkthrough for the German Tax Filing Service REST API with a synthetic UStVA 2026 filing. Details in [filing-api-calls/README.md](filing-api-calls/README.md).
+**[filing-api-calls](filing-api-calls/)**: .NET console walkthrough for the German Tax Filing Service over REST and MCP, built the same way as `invoice-api-calls`: the routes come from `/openapi/index.json` (REST) and `list_filing_routes` (MCP), every request body is an example from the published contract, and only the latest Stand of each Datenart is called. A `perf` mode load-tests `validate` and `preview`. Details in [filing-api-calls/README.md](filing-api-calls/README.md).
 
 ### Build your own tool
 
@@ -176,14 +176,18 @@ dotnet run --project minimum-api-calls/minimum-api-calls.csproj -- mcp https://m
 
 ### Business cases in the walkthrough
 
-| Step | Endpoint | What the walkthrough does |
-|---|---|---|
-| Check a filing | `POST /api/ustva/2026/validate` | Validates the bundled test filing; ELSTER accepts it with one hint (`11085154`, missing W-IdNr.). |
-| Reject an invalid filing | `POST /api/ustva/2026/validate` | Validates a variant with a four-digit postcode and prints the schema error (`FILING_SCHEMA_VIOLATION`). |
-| Print a filing | `POST /api/ustva/2026/preview` | Saves the official PDF as `ustva-2026-preview.pdf`. |
-| Test transmission | `POST /api/ustva/2026/filings` with `simulation: true` | Optional, only when a certificate is configured; prints the transfer ticket. Never retried automatically. |
+For the latest Stand of every Datenart (147 over REST, 136 over MCP, which has no tools for the Abfrage and SpezRecht routes):
 
-Other filing types and years work the same way under `/api/{datenart}/{stand}`; `/openapi/index.json` lists them all.
+| Step | Endpoint · MCP tool | Expected result |
+|---|---|---|
+| Reference filing | `POST /api/ustva/2026/validate` | The bundled test filing is valid (one hint `11085154`, missing W-IdNr.); with a four-digit postcode it is rejected (`FILING_SCHEMA_VIOLATION`). |
+| Check every example | `validate` · `validate_filing` | Each request example of the contract is valid (`error: false`). |
+| Refuse a request without data | `validate` with `{}` | `400`. |
+| Print a filing | `preview` · `preview_filing` | Valid, the official PDF is saved under `output/<transport>/pdf/`. |
+| Nothing is sent without credentials | `filings`, `decode`, Abfrage and SpezRecht routes without `certificate` | `400` before anything reaches ELSTER. |
+| Test transmission | `filings` · `simulate_filing` with `simulation: true` | Optional (`FILING_SIMULATE=true`), signed with the ERiC test certificate of the service. Never retried automatically. |
+
+Against the production deployment of 2026-11-08 every step passes over both transports except the contract examples ERiC rejects: 86 of them carry the tax number `1096099999999`, whose check digit is wrong (`ungueltigeSteuernummer`), and eight more are incomplete (Einspruch Nachtrag/Rücknahme, FEIN Beteiligte, Grundsteuer HH, E-Bilanz 6.9). The run therefore exits with 1 until the service publishes valid examples. The performance test passes: validate reaches about 110 requests/s at concurrency 50 with p95 640 ms, preview about 58 requests/s with p95 1.6 s.
 
 ### Run the walkthrough
 
@@ -191,7 +195,7 @@ Other filing types and years work the same way under `/api/{datenart}/{stand}`; 
 dotnet run --project filing-api-calls/filing-api-calls.csproj -- https://filing-service-api.simon-ai-enterprise.de
 ```
 
-An API key can follow the URL. The settings can also come from `FILING_API_BASE_URL`, `FILING_API_KEY`, `FILING_CERTIFICATE_PATH` and `FILING_CERTIFICATE_PIN`.
+An API key can follow the URL; `rest`, `mcp` or `perf` before it runs one part only. The settings can also come from `FILING_API_BASE_URL`, `FILING_API_KEY`, `FILING_SIMULATE`, `FILING_TEST_CERTIFICATE` and `FILING_PERF_*`.
 
 </details>
 

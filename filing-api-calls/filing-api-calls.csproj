@@ -6,7 +6,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>FilingServices.Samples</RootNamespace>
+    <UserSecretsId>5f0c6e7d-2b8a-4f43-9d61-0b7a1f3c9e24</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.0" />
+    <PackageReference Include="ModelContextProtocol" Version="2.3.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Update="TestFilings\**\*" CopyToOutputDirectory="PreserveNewest" />
