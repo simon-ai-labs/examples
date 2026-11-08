@@ -187,7 +187,7 @@ For the latest Stand of every Datenart (147 over REST, 136 over MCP, which has n
 | Nothing is sent without credentials | `filings`, `decode`, Abfrage and SpezRecht routes without `certificate` | `400` before anything reaches ELSTER. |
 | Test transmission | `filings` · `simulate_filing` with `simulation: true` | Optional (`FILING_SIMULATE=true`), signed with the ERiC test certificate of the service. Never retried automatically. |
 
-Against the production deployment of 2026-11-08 every step passes over both transports except the contract examples ERiC rejects: 86 of them carry the tax number `1096099999999`, whose check digit is wrong (`ungueltigeSteuernummer`), and eight more are incomplete (Einspruch Nachtrag/Rücknahme, FEIN Beteiligte, Grundsteuer HH, E-Bilanz 6.9). The run therefore exits with 1 until the service publishes valid examples. The performance test passes: validate reaches about 110 requests/s at concurrency 50 with p95 640 ms, preview about 58 requests/s with p95 1.6 s.
+Against the production deployment of 2026-11-08 (simon-ai-labs/filing-service-api#265, commit 16de955) all 543 steps pass over REST and all 529 over MCP. The performance test passes: validate reaches about 110 requests/s at concurrency 50 with p95 640 ms, preview about 58 requests/s with p95 1.6 s.
 
 ### Run the walkthrough
 
