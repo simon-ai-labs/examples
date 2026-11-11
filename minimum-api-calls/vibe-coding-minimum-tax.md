@@ -76,7 +76,7 @@ described in "Start now" at the end.
 | Machine-readable description | `/openapi/v1.json` (OpenAPI 3.1, public) |
 | MCP endpoint | `/mcp` (Streamable HTTP): the same operations as tools for AI agents |
 | API key | Created in the customer portal after subscribing through Google Cloud Marketplace |
-| Auth header | `X-API-Key: <key>` on every API call to a Marketplace deployment (not needed for `/docs`, `/mcp-docs` and `/openapi/v1.json`) |
+| Auth header | `X-API-Key: mtx_...` on every call under `/v1` and `/mcp` where the deployment requires a key (not needed for `/docs`, `/mcp-docs`, `/openapi/v1.json` and `/health`). Read it from `MINIMUM_TAX_API_KEY` and send it only when it is set: a key sent to a deployment without keys is rejected with `401` |
 | Request size | At most 32 MiB per request; larger documents are refused with `413` |
 
 ### Business cases
@@ -160,7 +160,7 @@ Errors are JSON problem details with `title`, `detail`, `status` and `traceId`.
 | Status | Meaning | What the tool should do |
 |---|---|---|
 | 400 | The XML is not well-formed, the wrong document type was sent (a CbCR to a GIR endpoint), or a rule set, jurisdiction, overlay or filing channel is unknown or conflicting | Show `detail`; if the request was built by the tool, fix the tool |
-| 401 | Key missing or invalid (Marketplace deployment) | Tell the user to check the configured key |
+| 401 | `api-key-rejected`: key missing or invalid, or sent to a deployment without keys | Tell the user to check the configured key (or send none where keys are off) |
 | 403 | Not allowed for this subscription or tenant | Show the message, do not retry |
 | 404 | Unknown resource | Check the path against the OpenAPI description |
 | 413 | The document is larger than 32 MiB or too deeply nested | Tell the user; do not retry |

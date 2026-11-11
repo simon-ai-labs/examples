@@ -10,7 +10,7 @@ var baseUri = new Uri(baseUrl.TrimEnd('/') + "/");
 Console.WriteLine($"Pillar Two & CbC Reporting Service: {baseUri} (docs: {new Uri(baseUri, "docs/")})");
 if (string.IsNullOrWhiteSpace(apiKey))
 {
-    Console.WriteLine("Notice: No MINIMUM_TAX_API_KEY supplied. A Marketplace deployment rejects unauthenticated requests.");
+    Console.WriteLine("Notice: No MINIMUM_TAX_API_KEY supplied. A deployment with API keys rejects unauthenticated requests.");
 }
 
 try
