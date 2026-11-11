@@ -70,7 +70,7 @@ described in "Start now" at the end.
 
 | Item | Value |
 |---|---|
-| Base URL | `https://minimum-tax-api-dev.simon-ai-enterprise.de` (public test deployment, no key needed). A Marketplace subscription comes with its own base URL |
+| Base URL | `https://minimum-tax-api.simon-ai-enterprise.de` (public test deployment, no key needed). A Marketplace subscription comes with its own base URL |
 | Interactive docs | `/docs/` (REST, with ready-to-send examples for every operation) |
 | MCP docs | `/mcp-docs/` (try every MCP tool in the browser, with the same examples) |
 | Machine-readable description | `/openapi/v1.json` (OpenAPI 3.1, public) |
