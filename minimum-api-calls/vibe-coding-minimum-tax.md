@@ -76,7 +76,7 @@ described in "Start now" at the end.
 | Machine-readable description | `/openapi/v1.json` (OpenAPI 3.1, public) |
 | MCP endpoint | `/mcp` (Streamable HTTP): the same operations as tools for AI agents |
 | API key | Created in the customer portal after subscribing through Google Cloud Marketplace |
-| Auth header | `X-API-Key: mtx_...` on every call under `/v1` and `/mcp` where the deployment requires a key (not needed for `/docs`, `/mcp-docs`, `/openapi/v1.json` and `/health`). Read it from `MINIMUM_TAX_API_KEY` and send it only when it is set: a key sent to a deployment without keys is rejected with `401` |
+| Auth header | `X-API-Key: saie_live_...` (created in the customer portal at https://www.simon-ai-enterprise.de/portal) on every call under `/v1` and `/mcp` where the deployment requires a key (not needed for `/docs`, `/mcp-docs`, `/openapi/v1.json` and `/health`). Read it from `MINIMUM_TAX_API_KEY` and send it only when it is set: a key sent to a deployment without keys is rejected with `401` |
 | Request size | At most 32 MiB per request; larger documents are refused with `413` |
 
 ### Business cases
@@ -155,7 +155,7 @@ Documents are sent as **XML text in a JSON string**, not as Base64:
 
 ### Errors
 
-Errors are JSON problem details with `title`, `detail`, `status` and `traceId`.
+Errors are JSON problem details with `title`, `detail`, `status` and `traceId`; key and limit refusals also carry `code`.
 
 | Status | Meaning | What the tool should do |
 |---|---|---|
@@ -165,7 +165,8 @@ Errors are JSON problem details with `title`, `detail`, `status` and `traceId`.
 | 404 | Unknown resource | Check the path against the OpenAPI description |
 | 413 | The document is larger than 32 MiB or too deeply nested | Tell the user; do not retry |
 | 422 | The JSON model cannot become a valid document (unknown country, currency or TIN type, an entity without owners, a computation without figures). `detail` names the field | Show `detail`; the data is the problem |
-| 429 | Rate limit (Marketplace deployment) | Wait (respect `Retry-After`) and retry |
+| 429 | `rate-limit-exceeded` / `concurrency-limit-exceeded`: the tenant's limit | Wait (respect `Retry-After`) and retry |
+| 503 | `api-key-check-unavailable`: the key could not be checked, nothing ran | Retry with backoff (respect `Retry-After`) |
 | 500 / 503 | Unexpected failure or temporarily unavailable | Retry a few times with backoff, then report the trace ID |
 
 ### Good to know
